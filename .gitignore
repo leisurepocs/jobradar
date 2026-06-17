@@ -1,0 +1,7 @@
+node_modules/
+state.json
+dist/
+assets/icon.iconset/
+.DS_Store
+*.dmg
+*.blockmap

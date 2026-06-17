@@ -1,0 +1,1379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>JobRadar</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --sand:        #F5EFE0;
+  --sand-2:      #EDE5CF;
+  --sand-3:      #E0D5BC;
+  --sand-4:      #C8BB9E;
+  --terra:       #C4714A;
+  --terra-light: #F2E0D6;
+  --terra-mid:   #DFA98C;
+  --gold:        #C49A35;
+  --gold-light:  #F5EDD0;
+  --gold-mid:    #DFC278;
+  --forest:      #2D4A3E;
+  --forest-2:    #3D6354;
+  --forest-3:    #4E7A68;
+  --sage:        #A8BFB0;
+  --sage-light:  #E8F0EB;
+  --rose:        #D4937A;
+  --rose-light:  #F5E5DE;
+  --ink:         #1C1612;
+  --ink-2:       #3D3228;
+  --ink-3:       #7A6A58;
+  --ink-4:       #B5A690;
+
+  --bg:          var(--sand);
+  --surface:     #FDFAF4;
+  --surface-2:   var(--sand-2);
+  --border:      var(--sand-3);
+  --border-soft: var(--sand-4);
+  --text:        var(--ink);
+  --text-2:      var(--ink-2);
+  --text-3:      var(--ink-3);
+  --text-4:      var(--ink-4);
+
+  --r:    6px;
+  --r2:   10px;
+  --r3:   16px;
+  --r4:   22px;
+
+  --shadow-sm: 0 2px 6px rgba(28,22,18,0.08), 0 1px 2px rgba(28,22,18,0.04);
+  --shadow-lg: 0 12px 40px rgba(28,22,18,0.14), 0 4px 12px rgba(28,22,18,0.08);
+
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text);
+}
+
+body { background: var(--bg); min-height: 100vh; }
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--sand-3); border-radius: 4px; }
+
+/* ══ TOPBAR ══ */
+.topbar {
+  height: 58px; background: var(--forest);
+  display: flex; align-items: center; padding: 0 24px; gap: 24px;
+  position: sticky; top: 0; z-index: 200;
+  box-shadow: 0 2px 12px rgba(28,22,18,0.2);
+  -webkit-app-region: drag;
+}
+.topbar button, .topbar select, .topbar input { -webkit-app-region: no-drag; }
+.logo { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.logo-mark { width: 34px; height: 34px; flex-shrink: 0; }
+.logo-text { display: flex; flex-direction: column; line-height: 1; }
+.logo-name { font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 16px; color: var(--sand); letter-spacing: -0.5px; }
+.logo-tag { font-size: 8.5px; font-weight: 500; color: var(--sage); letter-spacing: 2px; text-transform: uppercase; margin-top: 1px; }
+
+.stat-strip { display: flex; align-items: center; gap: 0; margin-left: 8px; }
+.stat-item { display: flex; flex-direction: column; align-items: center; padding: 0 16px; border-left: 1px solid rgba(168,191,176,0.2); }
+.stat-item:first-child { border-left: none; }
+.stat-n { font-family: 'JetBrains Mono', monospace; font-size: 17px; font-weight: 500; color: var(--sand); line-height: 1; }
+.stat-n.hi { color: #8FD4A8; }
+.stat-n.warn { color: var(--gold-mid); }
+.stat-l { font-size: 8px; font-weight: 500; color: var(--sage); letter-spacing: 1px; text-transform: uppercase; margin-top: 3px; }
+
+.scan-btn {
+  margin-left: auto; height: 36px; padding: 0 20px;
+  background: var(--terra); border: none; border-radius: var(--r2);
+  font-family: 'Outfit', sans-serif; font-weight: 600; font-size: 13px; color: #fff;
+  cursor: pointer; display: flex; align-items: center; gap: 8px;
+  transition: background 0.15s, transform 0.1s, box-shadow 0.15s;
+  box-shadow: 0 2px 8px rgba(196,113,74,0.4); white-space: nowrap; letter-spacing: 0.1px;
+}
+.scan-btn:hover { background: #B5623D; box-shadow: 0 4px 16px rgba(196,113,74,0.5); }
+.scan-btn:active { transform: scale(0.97); }
+.scan-btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; box-shadow: none; }
+
+/* ══ INTEL BAR ══ */
+.intel-bar {
+  height: 38px; background: var(--forest-2);
+  display: flex; align-items: center; padding: 0 24px; gap: 20px;
+  font-size: 11px; color: var(--sage);
+}
+.intel-item { display: flex; align-items: center; gap: 7px; }
+.intel-sep { width: 1px; height: 14px; background: rgba(168,191,176,0.2); }
+.budget-track { width: 72px; height: 3px; background: rgba(168,191,176,0.2); border-radius: 2px; overflow: hidden; }
+.budget-fill { height: 100%; background: var(--gold); border-radius: 2px; transition: width 0.6s ease; }
+.mode-chip { font-size: 9px; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase; padding: 2px 7px; border-radius: 3px; }
+.mode-seed { background: rgba(212,163,67,0.25); color: var(--gold-mid); }
+.mode-live { background: rgba(143,212,168,0.2); color: #8FD4A8; }
+.intel-query { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--gold-mid); max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.intel-right { margin-left: auto; color: rgba(168,191,176,0.5); font-size: 10px; }
+.sync-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--sand-4); flex-shrink: 0; transition: background 0.3s; }
+.sync-dot.ok { background: #8FD4A8; }
+.sync-dot.err { background: var(--terra); }
+
+/* ══ BODY ══ */
+.body { display: flex; height: calc(100vh - 96px); overflow: hidden; }
+.feed { flex: 1; overflow-y: auto; padding: 20px 22px; min-width: 0; }
+.sidebar { width: 276px; min-width: 276px; background: var(--surface); border-left: 1px solid var(--border); overflow-y: auto; padding: 20px 18px; display: flex; flex-direction: column; gap: 22px; }
+
+/* ══ CONTROLS ══ */
+.controls { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
+.search-wrap { flex: 1; min-width: 200px; position: relative; display: flex; align-items: center; }
+.search-icon { position: absolute; left: 11px; color: var(--ink-4); font-size: 12px; pointer-events: none; }
+.search-input { width: 100%; height: 36px; padding: 0 12px 0 30px; border: 1px solid var(--border); border-radius: var(--r2); font-size: 13px; font-family: 'Inter', sans-serif; background: var(--surface); color: var(--text); transition: border-color 0.15s, box-shadow 0.15s; }
+.search-input:focus { outline: none; border-color: var(--terra); box-shadow: 0 0 0 3px rgba(196,113,74,0.12); }
+.search-input::placeholder { color: var(--ink-4); }
+
+.ctrl-sel { height: 36px; padding: 0 10px; border: 1px solid var(--border); border-radius: var(--r2); font-size: 12px; font-family: 'Inter', sans-serif; background: var(--surface); color: var(--text-2); cursor: pointer; transition: border-color 0.15s; }
+.ctrl-sel:focus { outline: none; border-color: var(--terra); }
+
+.burst { display: flex; align-items: center; gap: 5px; height: 36px; padding: 0 10px; border: 1px solid var(--border); border-radius: var(--r2); background: var(--surface); font-size: 12px; color: var(--text-3); }
+.burst-label { font-size: 11px; color: var(--text-4); }
+.burst-btn { width: 20px; height: 20px; border: 1px solid var(--border); border-radius: 4px; background: var(--surface-2); cursor: pointer; font-size: 12px; color: var(--text-2); display: flex; align-items: center; justify-content: center; transition: background 0.1s; line-height: 1; }
+.burst-btn:hover { background: var(--sand-3); }
+.burst-n { font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 500; color: var(--terra); width: 14px; text-align: center; }
+
+.tgl { height: 36px; padding: 0 14px; border: 1px solid var(--border); border-radius: var(--r2); background: var(--surface); font-size: 12px; font-family: 'Inter', sans-serif; color: var(--text-3); cursor: pointer; transition: all 0.15s; white-space: nowrap; display: flex; align-items: center; gap: 5px; }
+.tgl:hover { border-color: var(--border-soft); color: var(--text-2); }
+.tgl.on { background: var(--terra-light); border-color: var(--terra-mid); color: var(--terra); font-weight: 500; }
+.tgl.direct-on { background: var(--gold-light); border-color: var(--gold-mid); color: var(--gold); font-weight: 500; }
+
+/* ══ TABS ══ */
+.tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 14px; overflow-x: auto; gap: 0; }
+.tab { padding: 7px 14px; font-size: 12px; font-weight: 500; color: var(--text-3); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap; transition: color 0.12s, border-color 0.12s; display: flex; align-items: center; gap: 5px; }
+.tab:hover { color: var(--text-2); }
+.tab.on { color: var(--terra); border-bottom-color: var(--terra); }
+.tab-n { font-family: 'JetBrains Mono', monospace; font-size: 10px; background: var(--surface-2); color: var(--text-4); padding: 1px 5px; border-radius: 3px; min-width: 18px; text-align: center; }
+.tab.on .tab-n { background: var(--terra-light); color: var(--terra); }
+
+.sort-row { display: flex; align-items: center; gap: 6px; margin-bottom: 12px; font-size: 11px; color: var(--text-4); }
+.sort-btn { padding: 3px 9px; border: 1px solid var(--border); border-radius: 4px; background: transparent; font-size: 11px; font-family: 'Inter', sans-serif; color: var(--text-3); cursor: pointer; transition: all 0.12s; }
+.sort-btn:hover { border-color: var(--border-soft); color: var(--text-2); }
+.sort-btn.on { background: var(--forest); color: var(--sand); border-color: var(--forest); }
+
+/* ══ BANNERS ══ */
+.banner { display: none; align-items: flex-start; gap: 10px; padding: 10px 14px; border-radius: var(--r2); margin-bottom: 12px; font-size: 12px; line-height: 1.5; }
+.banner-error { background: var(--rose-light); border: 1px solid var(--terra-mid); color: #8B2E10; }
+.banner-info { background: var(--gold-light); border: 1px solid var(--gold-mid); color: #7A5A10; font-size: 11px; }
+
+/* ══ EMPTY ══ */
+.empty { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 80px 24px; text-align: center; }
+.empty-mark { width: 56px; height: 56px; background: var(--sand-2); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 18px; font-size: 22px; color: var(--ink-4); }
+.empty h3 { font-family: 'Outfit', sans-serif; font-size: 16px; font-weight: 600; color: var(--text-2); margin-bottom: 8px; }
+.empty p { font-size: 13px; color: var(--text-4); line-height: 1.7; max-width: 280px; }
+
+/* ══ JOB CARDS ══ */
+.cards { display: flex; flex-direction: column; gap: 8px; }
+.job-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r3); padding: 16px 18px; position: relative; overflow: hidden; transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s; animation: cardIn 0.22s ease both; }
+@keyframes cardIn { from { opacity:0; transform:translateY(5px); } to { opacity:1; transform:translateY(0); } }
+.job-card:hover { border-color: var(--terra-mid); box-shadow: var(--shadow-sm); transform: translateY(-1px); }
+.job-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; border-radius: var(--r3) 0 0 var(--r3); }
+.job-card.match-strong::before { background: var(--forest-3); }
+.job-card.match-partial::before { background: var(--gold); }
+.job-card.match-low::before { background: var(--sand-3); }
+
+.card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+.card-main { flex: 1; min-width: 0; }
+.card-title { font-family: 'Outfit', sans-serif; font-size: 14px; font-weight: 600; color: var(--text); line-height: 1.3; margin-bottom: 3px; }
+.card-sub { font-size: 12px; color: var(--text-3); display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.card-co { color: var(--text-2); font-weight: 500; }
+.card-dot { color: var(--sand-4); }
+
+.score-cluster { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.score-ring { width: 46px; height: 46px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 500; flex-direction: column; line-height: 1; }
+.score-ring .ring-label { font-size: 7px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; opacity: 0.7; margin-top: 1px; }
+.ring-high { background: var(--sage-light); color: var(--forest); border: 2px solid var(--sage); }
+.ring-mid  { background: var(--gold-light);  color: var(--gold);   border: 2px solid var(--gold-mid); }
+.ring-low  { background: var(--sand-2);       color: var(--ink-4);  border: 2px solid var(--sand-3); }
+.ring-null { background: var(--sand-2); color: var(--ink-4); border: 2px dashed var(--sand-4); }
+.score-ring.small { width: 38px; height: 38px; font-size: 12px; }
+
+.card-tags { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 12px; }
+.tag { font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 3px; white-space: nowrap; letter-spacing: 0.2px; }
+.tag-strong  { background: var(--sage-light); color: var(--forest-2); }
+.tag-partial { background: var(--gold-light);  color: #7A5A10; }
+.tag-low     { background: var(--sand-2);       color: var(--ink-4); font-weight: 500; }
+.tag-new     { background: var(--terra);         color: #fff; }
+.tag-remote  { background: var(--rose-light);   color: #8B3A20; }
+.tag-fresh   { background: var(--forest);        color: var(--sand); }
+.tag-salary  { background: var(--sand-2); color: var(--ink-2); font-family: 'JetBrains Mono', monospace; font-size: 10px; }
+.tag-size    { background: var(--sand-2); color: var(--ink-4); font-weight: 500; }
+.tag-direct  { background: var(--gold-light); color: #7A5A10; }
+.tag-contract { background: var(--rose-light); color: #8B2E10; }
+.tag-t1 { background: rgba(90,63,160,0.1); color: #5A3FA0; }
+.tag-t2 { background: var(--sage-light); color: var(--forest-2); }
+.tag-t3 { background: var(--gold-light); color: #7A5A10; }
+.tag-t4 { background: var(--terra-light); color: #8B3A20; }
+.tag-t5 { background: var(--sand-2); color: var(--ink-3); }
+
+.card-foot { display: flex; align-items: center; gap: 6px; padding-top: 12px; border-top: 1px solid var(--sand-2); }
+.card-btn { height: 30px; padding: 0 12px; border: 1px solid var(--border); border-radius: var(--r); font-size: 11px; font-family: 'Inter', sans-serif; font-weight: 500; background: var(--surface); color: var(--text-2); cursor: pointer; transition: all 0.12s; white-space: nowrap; }
+.card-btn:hover { background: var(--surface-2); border-color: var(--border-soft); }
+.card-btn.apply-btn { background: var(--forest); border-color: var(--forest); color: var(--sand); }
+.card-btn.apply-btn:hover { background: var(--forest-2); }
+.card-btn.direct-apply { background: var(--gold); border-color: var(--gold); color: var(--ink); }
+.card-btn.direct-apply:hover { background: var(--gold-mid); }
+.status-sel { margin-left: auto; height: 30px; padding: 0 8px; border: 1px solid var(--border); border-radius: var(--r); font-size: 11px; font-family: 'Inter', sans-serif; background: var(--surface); color: var(--text-3); cursor: pointer; }
+.status-sel:focus { outline: none; border-color: var(--terra); }
+
+.source-badge { font-size: 9px; font-weight: 600; padding: 2px 6px; border-radius: 3px; letter-spacing: 0.4px; text-transform: uppercase; }
+.src-direct { background: var(--gold-light); color: #7A5A10; }
+.src-linkedin { background: var(--sand-2); color: var(--ink-4); }
+
+/* ══ BRIEF PANEL ══ */
+.brief-wrap { margin-top: 12px; border: 1px solid var(--sand-3); border-radius: var(--r2); overflow: hidden; }
+.brief-tabs { display: flex; background: var(--sand-2); border-bottom: 1px solid var(--sand-3); overflow-x: auto; }
+.brief-tab { padding: 6px 12px; font-size: 10px; font-weight: 600; letter-spacing: 0.4px; text-transform: uppercase; color: var(--ink-4); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: color 0.12s; white-space: nowrap; }
+.brief-tab:hover { color: var(--text-2); }
+.brief-tab.on { color: var(--terra); border-bottom-color: var(--terra); }
+.brief-body { background: var(--surface); padding: 14px 16px; font-size: 12px; line-height: 1.65; color: var(--text-2); min-height: 60px; }
+.brief-section { display: none; }
+.brief-section.on { display: block; }
+.brief-row { margin-bottom: 8px; }
+.brief-row:last-child { margin-bottom: 0; }
+.brief-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--terra); margin-bottom: 3px; }
+.brief-text { color: var(--text-2); line-height: 1.6; }
+
+.kw-list { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 4px; }
+.kw-chip { font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 3px; background: var(--terra-light); color: var(--terra); }
+.kw-chip.present { background: var(--sage-light); color: var(--forest-2); }
+
+.bullet-list { list-style: none; padding: 0; }
+.bullet-list li { padding: 5px 0 5px 14px; border-bottom: 1px solid var(--sand-2); position: relative; font-size: 12px; line-height: 1.5; color: var(--text-2); }
+.bullet-list li:last-child { border: none; }
+.bullet-list li::before { content: '▸'; position: absolute; left: 0; color: var(--terra); font-size: 10px; top: 7px; }
+
+.flag-list { list-style: none; padding: 0; }
+.flag-list li { padding: 5px 0 5px 16px; border-bottom: 1px solid var(--sand-2); position: relative; font-size: 12px; color: var(--text-2); }
+.flag-list li:last-child { border: none; }
+.flag-list li::before { content: '⚑'; position: absolute; left: 0; color: var(--gold); font-size: 10px; top: 6px; }
+
+.rec-box { background: var(--forest); color: var(--sand); border-radius: var(--r); padding: 10px 12px; font-size: 12px; line-height: 1.6; }
+.rec-box strong { color: var(--gold-mid); }
+
+/* ══ SIDEBAR ══ */
+.sb-head { font-family: 'Outfit', sans-serif; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.4px; color: var(--ink-4); margin-bottom: 10px; }
+
+.profile-card { background: var(--forest); border-radius: var(--r2); padding: 16px; color: var(--sand); position: relative; overflow: hidden; }
+.profile-card::after { content: ''; position: absolute; right: -20px; bottom: -20px; width: 80px; height: 80px; border: 8px solid rgba(212,163,67,0.15); border-radius: 50%; }
+.profile-card::before { content: ''; position: absolute; right: 10px; bottom: 10px; width: 40px; height: 40px; border: 8px solid rgba(212,163,67,0.1); border-radius: 50%; }
+.p-name { font-family: 'Outfit', sans-serif; font-size: 14px; font-weight: 700; margin-bottom: 1px; position: relative; }
+.p-role { font-size: 10px; color: var(--sage); margin-bottom: 14px; position: relative; }
+.p-kpis { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; position: relative; }
+.kpi-n { font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 500; color: var(--gold-mid); }
+.kpi-l { font-size: 9px; color: var(--sage); margin-top: 1px; }
+
+/* Comp config */
+.comp-grid { display: flex; flex-direction: column; gap: 8px; }
+.comp-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 11px; color: var(--text-2); }
+.comp-input {
+  width: 84px; height: 28px; padding: 0 8px;
+  border: 1px solid var(--border); border-radius: var(--r);
+  font-size: 11px; font-family: 'JetBrains Mono', monospace;
+  background: var(--surface); color: var(--text); text-align: right;
+}
+.comp-input:focus { outline: none; border-color: var(--terra); }
+.comp-curve {
+  margin-top: 4px; height: 36px; border-radius: var(--r);
+  background: linear-gradient(90deg, var(--sand-2) 0%, var(--gold-light) 45%, var(--sage-light) 75%, var(--forest) 100%);
+  position: relative; overflow: hidden;
+}
+.comp-curve-label {
+  position: absolute; font-size: 9px; color: var(--ink-3); font-family: 'JetBrains Mono', monospace;
+  top: 50%; transform: translateY(-50%);
+}
+
+.tier-rows { display: flex; flex-direction: column; gap: 0; }
+.tier-row { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 11px; color: var(--text-2); }
+.tier-row:last-child { border: none; }
+.t-chip { font-size: 8px; font-weight: 700; letter-spacing: 0.4px; text-transform: uppercase; padding: 2px 5px; border-radius: 3px; width: 34px; text-align: center; flex-shrink: 0; }
+.t-w { margin-left: auto; font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--ink-4); }
+
+.q-list { display: flex; flex-direction: column; }
+.q-item { display: flex; align-items: center; gap: 7px; padding: 5px 0; border-bottom: 1px solid var(--border); font-size: 11px; color: var(--text-3); overflow: hidden; }
+.q-item:last-child { border: none; }
+.q-item.q-cur { color: var(--text); font-weight: 500; }
+.q-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--sand-3); flex-shrink: 0; }
+.q-dot.cur { background: var(--terra); }
+.q-txt { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+
+.quick-grid { display: flex; flex-wrap: wrap; gap: 5px; }
+.quick-btn { padding: 4px 10px; border: 1px solid var(--border); border-radius: var(--r4); background: var(--surface); font-size: 11px; font-family: 'Inter', sans-serif; color: var(--text-2); cursor: pointer; transition: all 0.12s; }
+.quick-btn:hover { background: var(--terra-light); border-color: var(--terra-mid); color: var(--terra); }
+
+.export-row { display: none; gap: 6px; margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--border); }
+.export-btn { height: 30px; padding: 0 12px; border: 1px solid var(--border); border-radius: var(--r); font-size: 11px; font-family: 'Inter', sans-serif; background: var(--surface); color: var(--text-2); cursor: pointer; transition: all 0.12s; }
+.export-btn:hover { background: var(--surface-2); }
+
+.toast { position: fixed; bottom: 24px; right: 24px; background: var(--forest); border-radius: var(--r2); padding: 14px 18px; box-shadow: var(--shadow-lg); z-index: 999; display: none; max-width: 300px; animation: toastIn 0.25s ease; }
+.toast.show { display: block; }
+@keyframes toastIn { from{transform:translateY(8px);opacity:0} to{transform:translateY(0);opacity:1} }
+.toast-title { font-family: 'Outfit', sans-serif; font-size: 13px; font-weight: 600; color: var(--sand); margin-bottom: 2px; }
+.toast-body { font-size: 11px; color: var(--sage); }
+
+/* ══ MODAL ══ */
+.modal-overlay { position:fixed; inset:0; background:rgba(28,22,18,0.6); z-index:500; display:flex; align-items:center; justify-content:center; }
+.modal-overlay.hidden { display:none; }
+.modal-box { background:var(--surface); border-radius:var(--r3); width:min(680px,94vw); max-height:82vh; overflow:hidden; display:flex; flex-direction:column; box-shadow:var(--shadow-lg); }
+.modal-head { display:flex; align-items:center; justify-content:space-between; padding:16px 20px; border-bottom:1px solid var(--border); }
+.modal-title { font-family:'Outfit',sans-serif; font-size:15px; font-weight:700; color:var(--text); }
+.modal-close { width:28px; height:28px; border:none; background:var(--surface-2); border-radius:var(--r); cursor:pointer; font-size:18px; color:var(--text-3); display:flex; align-items:center; justify-content:center; line-height:1; }
+.modal-close:hover { background:var(--sand-3); }
+.modal-body { overflow-y:auto; padding:20px; flex:1; }
+.modal-loading { display:flex; align-items:center; justify-content:center; padding:48px; color:var(--text-4); font-size:13px; gap:10px; }
+.weekly-section { margin-bottom:18px; }
+.weekly-label { font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:1.2px; color:var(--terra); margin-bottom:8px; }
+.weekly-list { list-style:none; padding:0; display:flex; flex-direction:column; gap:5px; }
+.weekly-list li { font-size:12px; color:var(--text-2); padding:7px 10px 7px 22px; background:var(--sand-2); border-radius:var(--r); position:relative; line-height:1.5; }
+.weekly-list li::before { content:'▸'; position:absolute; left:8px; color:var(--terra); font-size:10px; top:9px; }
+.weekly-stat-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:4px; }
+.weekly-stat { background:var(--sand-2); border-radius:var(--r); padding:10px; text-align:center; }
+.weekly-stat-n { font-family:'JetBrains Mono',monospace; font-size:20px; font-weight:500; color:var(--forest); }
+.weekly-stat-l { font-size:9px; color:var(--ink-4); text-transform:uppercase; letter-spacing:0.8px; margin-top:2px; }
+
+/* Brief AI */
+@keyframes spin { to { transform: rotate(360deg); } }
+.brief-spinner { display:inline-block; animation:spin 0.8s linear infinite; margin-right:6px; }
+.ats-tips-box { background:var(--forest); color:var(--sand); border-radius:var(--r); padding:10px 12px; font-size:12px; line-height:1.65; }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="logo">
+    <svg class="logo-mark" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="17" cy="17" r="15.5" stroke="#C49A35" stroke-width="1.5" opacity="0.6"/>
+      <path d="M17 4 L30 17 L17 30 L4 17 Z" stroke="#C49A35" stroke-width="1.5" fill="none" opacity="0.8"/>
+      <circle cx="17" cy="17" r="4" fill="#C4714A"/>
+      <line x1="17" y1="9" x2="17" y2="13" stroke="#C49A35" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="17" y1="21" x2="17" y2="25" stroke="#C49A35" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="9" y1="17" x2="13" y2="17" stroke="#C49A35" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="21" y1="17" x2="25" y2="17" stroke="#C49A35" stroke-width="1.5" stroke-linecap="round"/>
+      <circle cx="17" cy="3" r="1.2" fill="#C49A35" opacity="0.6"/>
+      <circle cx="17" cy="31" r="1.2" fill="#C49A35" opacity="0.6"/>
+      <circle cx="3" cy="17" r="1.2" fill="#C49A35" opacity="0.6"/>
+      <circle cx="31" cy="17" r="1.2" fill="#C49A35" opacity="0.6"/>
+    </svg>
+    <div class="logo-text">
+      <span class="logo-name">JobRadar</span>
+      <span class="logo-tag">Intelligence</span>
+    </div>
+  </div>
+
+  <div class="stat-strip">
+    <div class="stat-item"><span class="stat-n" id="statSurfaced">0</span><span class="stat-l">Surfaced</span></div>
+    <div class="stat-item"><span class="stat-n hi" id="statStrong">0</span><span class="stat-l">Strong</span></div>
+    <div class="stat-item"><span class="stat-n warn" id="statNew">0</span><span class="stat-l">New</span></div>
+    <div class="stat-item"><span class="stat-n" id="statPipeline">0</span><span class="stat-l">Pipeline</span></div>
+    <div class="stat-item"><span class="stat-n" id="statDirect">0</span><span class="stat-l">Direct</span></div>
+    <div class="stat-item"><span class="stat-n" id="statCalls">0</span><span class="stat-l">API Calls</span></div>
+  </div>
+
+  <button class="scan-btn" id="scanBtn" onclick="runScan()">▶ Scan Now</button>
+</header>
+
+<div class="intel-bar">
+  <div class="intel-item">
+    <span id="budgetTxt">0 / 200 calls</span>
+    <div class="budget-track"><div class="budget-fill" id="budgetFill" style="width:0%"></div></div>
+  </div>
+  <div class="intel-sep"></div>
+  <div class="intel-item">Mode <span class="mode-chip mode-seed" id="modePill">Seed</span></div>
+  <div class="intel-sep"></div>
+  <div class="intel-item">Query <span class="intel-query" id="rotatingQ">—</span></div>
+  <div class="intel-sep"></div>
+  <div class="intel-item"><div class="sync-dot" id="syncDot"></div><span id="syncLabel">Local</span></div>
+  <span class="intel-right" id="nextLabel">Next scan: —</span>
+</div>
+
+<div class="body">
+  <main class="feed">
+
+    <div class="controls">
+      <div class="search-wrap">
+        <span class="search-icon">⌕</span>
+        <input class="search-input" id="customQuery" type="text" placeholder="Custom query — overrides rotation" onkeydown="if(event.key==='Enter')runScan()"/>
+      </div>
+      <select class="ctrl-sel" id="locationFilter">
+        <option value="nyc_remote">NYC + Remote (default)</option>
+        <option value="nyc">New York metro</option>
+        <option value="nj">New Jersey</option>
+        <option value="ct">Connecticut</option>
+        <option value="national">National · remote-eligible</option>
+        <option value="remote">Remote US only</option>
+        <option value="sf">San Francisco</option>
+        <option value="chicago">Chicago</option>
+        <option value="boston">Boston</option>
+        <option value="dc">Washington DC</option>
+        <option value="austin">Austin</option>
+        <option value="seattle">Seattle</option>
+      </select>
+      <div class="burst">
+        <span class="burst-label">Burst</span>
+        <button class="burst-btn" onclick="adjBurst(-1)">−</button>
+        <span class="burst-n" id="burstN">3</span>
+        <button class="burst-btn" onclick="adjBurst(1)">+</button>
+      </div>
+      <button class="tgl on" id="salaryTgl" onclick="toggleF('salary')">Floor filter</button>
+      <button class="tgl" id="remoteTgl" onclick="toggleF('remote')">Remote only</button>
+      <button class="tgl" id="directTgl" onclick="toggleF('direct')">⬡ Direct only</button>
+    </div>
+
+    <div class="banner banner-error" id="errorBanner"></div>
+    <div class="banner banner-info"  id="infoBanner"></div>
+
+    <div class="tabs">
+      <div class="tab on" onclick="setTab('all')" id="tab-all">All <span class="tab-n" id="cnt-all">0</span></div>
+      <div class="tab" onclick="setTab('strong')" id="tab-strong">Strong <span class="tab-n" id="cnt-strong">0</span></div>
+      <div class="tab" onclick="setTab('partial')" id="tab-partial">Partial <span class="tab-n" id="cnt-partial">0</span></div>
+      <div class="tab" onclick="setTab('fresh')" id="tab-fresh">Fresh 48h <span class="tab-n" id="cnt-fresh">0</span></div>
+      <div class="tab" onclick="setTab('direct')" id="tab-direct">Direct ATS <span class="tab-n" id="cnt-direct">0</span></div>
+      <div class="tab" onclick="setTab('new')" id="tab-new">Unseen <span class="tab-n" id="cnt-new">0</span></div>
+      <div class="tab" onclick="setTab('pipeline')" id="tab-pipeline">Pipeline <span class="tab-n" id="cnt-pipeline">0</span></div>
+      <div class="tab" onclick="setTab('applied')" id="tab-applied">Applied <span class="tab-n" id="cnt-applied">0</span></div>
+      <div class="tab" onclick="setTab('interview')" id="tab-interview">Interview <span class="tab-n" id="cnt-interview">0</span></div>
+    </div>
+
+    <div class="sort-row">
+      <span>Sort</span>
+      <button class="sort-btn on" id="sort-fit"     onclick="setSort('fit')">Fit</button>
+      <button class="sort-btn"    id="sort-value"   onclick="setSort('value')">Value</button>
+      <button class="sort-btn"    id="sort-blended" onclick="setSort('blended')">Blended</button>
+      <button class="sort-btn"    id="sort-recent"  onclick="setSort('recent')">Recent</button>
+      <span style="margin-left:auto;color:var(--ink-4);font-family:'JetBrains Mono',monospace;font-size:10px" id="resultsLbl"></span>
+    </div>
+
+    <div class="cards" id="cardContainer">
+      <div class="empty">
+        <div class="empty-mark">◎</div>
+        <h3>No roles surfaced yet</h3>
+        <p>Click Scan Now to begin. First scan seeds from the last 30 days — smart lookback activates after.</p>
+      </div>
+    </div>
+
+    <div class="export-row" id="exportRow">
+      <button class="export-btn" onclick="exportCSV()">Export CSV</button>
+      <button class="export-btn" onclick="exportJSON()">Export JSON</button>
+    </div>
+  </main>
+
+  <aside class="sidebar">
+
+    <div>
+      <div class="sb-head">Candidate</div>
+      <div class="profile-card">
+        <div class="p-name">Micah Davis</div>
+        <div class="p-role">Security Program Manager · TikTok USDS</div>
+        <div class="p-kpis">
+          <div><div class="kpi-n">36</div><div class="kpi-l">sites managed</div></div>
+          <div><div class="kpi-n">99.7%</div><div class="kpi-l">uptime</div></div>
+          <div><div class="kpi-n">5.2hr</div><div class="kpi-l">MTTR</div></div>
+          <div><div class="kpi-n">83%</div><div class="kpi-l">alarm reduction</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="sb-head">Comp targets · Value score</div>
+      <div class="comp-grid">
+        <div class="comp-row">
+          <span>Floor</span>
+          <input class="comp-input" id="compFloor" type="number" step="5000" onchange="updateComp()"/>
+        </div>
+        <div class="comp-row">
+          <span>Target</span>
+          <input class="comp-input" id="compTarget" type="number" step="5000" onchange="updateComp()"/>
+        </div>
+        <div class="comp-row">
+          <span>Ceiling</span>
+          <input class="comp-input" id="compCeiling" type="number" step="5000" onchange="updateComp()"/>
+        </div>
+        <div class="comp-curve">
+          <span class="comp-curve-label" style="left:4px">low</span>
+          <span class="comp-curve-label" style="right:4px">high value</span>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="sb-head">Search tiers</div>
+      <div class="tier-rows">
+        <div class="tier-row"><span class="t-chip tag-t1">T1</span> Gov / Risk <span class="t-w">×5</span></div>
+        <div class="tier-row"><span class="t-chip tag-t2">T2</span> Converged <span class="t-w">×3</span></div>
+        <div class="tier-row"><span class="t-chip tag-t3">T3</span> Core SPM <span class="t-w">×2</span></div>
+        <div class="tier-row"><span class="t-chip tag-t4">T4</span> Identity <span class="t-w">×2</span></div>
+        <div class="tier-row"><span class="t-chip tag-t5">T5</span> AI / Adjacent <span class="t-w">×1</span></div>
+      </div>
+    </div>
+
+    <div>
+      <div class="sb-head">Up next</div>
+      <div class="q-list" id="queueList"></div>
+    </div>
+
+    <div>
+      <div class="sb-head">Quick scan</div>
+      <div class="quick-grid" id="quickGrid"></div>
+    </div>
+
+    <div style="margin-top:auto;padding-top:14px;border-top:1px solid var(--border)">
+      <button class="export-btn" style="width:100%;height:34px;font-size:11px;display:flex;align-items:center;justify-content:center;gap:6px;" onclick="showWeeklyReport()">◎ Weekly Report</button>
+    </div>
+
+  </aside>
+</div>
+
+<div class="toast" id="toast">
+  <div class="toast-title" id="toastTitle"></div>
+  <div class="toast-body"  id="toastBody"></div>
+</div>
+
+<div class="modal-overlay hidden" id="weeklyModal" onclick="if(event.target===this)closeWeeklyModal()">
+  <div class="modal-box">
+    <div class="modal-head">
+      <span class="modal-title">Weekly Activity Report</span>
+      <button class="modal-close" onclick="closeWeeklyModal()">×</button>
+    </div>
+    <div class="modal-body" id="weeklyModalBody">
+      <div class="modal-loading">Loading…</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const MONTHLY_BUDGET = 200;
+
+// ── Query pool ────────────────────────────────────────────────────────────────
+const QUERIES = [
+  {q:'Security Governance Program Manager',cat:'Gov/Risk',tier:1,w:5},
+  {q:'GRC Program Manager enterprise',cat:'Gov/Risk',tier:1,w:5},
+  {q:'Security Risk Manager enterprise',cat:'Gov/Risk',tier:1,w:5},
+  {q:'Cybersecurity Governance Risk Compliance Manager',cat:'Gov/Risk',tier:1,w:5},
+  {q:'Security Compliance Program Manager',cat:'Gov/Risk',tier:1,w:5},
+  {q:'Technology Risk Program Manager',cat:'Gov/Risk',tier:1,w:5},
+  {q:'IT Risk Governance Manager',cat:'Gov/Risk',tier:1,w:5},
+  {q:'Enterprise Security Risk Lead',cat:'Gov/Risk',tier:1,w:5},
+  {q:'Information Risk Manager enterprise',cat:'Gov/Risk',tier:1,w:5},
+  {q:'Operational Risk Manager security',cat:'Gov/Risk',tier:1,w:5},
+  {q:'Security Audit Program Manager',cat:'Gov/Risk',tier:1,w:5},
+  {q:'Cybersecurity Systems Project Manager',cat:'Gov/Risk',tier:1,w:5},
+  {q:'Security Lead Architect GRC',cat:'Gov/Risk',tier:1,w:5},
+  {q:'Converged Security Program Manager',cat:'Converged',tier:2,w:3},
+  {q:'Physical Security Program Manager enterprise',cat:'Converged',tier:2,w:3},
+  {q:'Cyber Physical Security Manager',cat:'Converged',tier:2,w:3},
+  {q:'Global Security Technology Manager',cat:'Converged',tier:2,w:3},
+  {q:'Security Operations Technology Manager',cat:'Converged',tier:2,w:3},
+  {q:'Corporate Security Program Manager enterprise',cat:'Converged',tier:2,w:3},
+  {q:'Security Infrastructure Program Manager',cat:'Converged',tier:2,w:3},
+  {q:'Senior Security Program Manager',cat:'Core SPM',tier:3,w:2},
+  {q:'Security Program Manager enterprise',cat:'Core SPM',tier:3,w:2},
+  {q:'Security Operations Program Manager',cat:'Core SPM',tier:3,w:2},
+  {q:'Cybersecurity Program Manager enterprise',cat:'Core SPM',tier:3,w:2},
+  {q:'Cloud Security Program Manager',cat:'Core SPM',tier:3,w:2},
+  {q:'Security Strategy Program Manager',cat:'Core SPM',tier:3,w:2},
+  {q:'Security Portfolio Manager',cat:'Core SPM',tier:3,w:2},
+  {q:'Security Delivery Manager enterprise',cat:'Core SPM',tier:3,w:2},
+  {q:'Identity Governance Program Manager',cat:'Identity',tier:4,w:2},
+  {q:'IAM Program Manager enterprise',cat:'Identity',tier:4,w:2},
+  {q:'Access Governance Program Manager',cat:'Identity',tier:4,w:1},
+  {q:'Identity Security Program Manager',cat:'Identity',tier:4,w:1},
+  {q:'AI Security Governance Lead',cat:'AI/Innovation',tier:5,w:1},
+  {q:'Security Transformation Program Manager',cat:'AI/Innovation',tier:5,w:1},
+  {q:'Security Vendor Risk Manager',cat:'Adjacent',tier:5,w:1},
+  {q:'Trust Safety Program Manager enterprise',cat:'Adjacent',tier:5,w:1},
+  {q:'Resilience Program Manager security',cat:'Adjacent',tier:5,w:1},
+  {q:'Security Program Manager JPMorgan',cat:'Gov/Risk',tier:1,w:3},
+  {q:'GRC Manager Goldman Sachs',cat:'Gov/Risk',tier:1,w:3},
+  {q:'Security Program Manager Salesforce',cat:'Core SPM',tier:3,w:2},
+  {q:'Security Governance Manager Google',cat:'Gov/Risk',tier:1,w:3},
+  {q:'Security Program Manager Microsoft',cat:'Core SPM',tier:3,w:2},
+  {q:'GRC Program Manager Citigroup',cat:'Gov/Risk',tier:1,w:3},
+];
+
+const POOL = [];
+for (const q of QUERIES) for (let i = 0; i < q.w; i++) POOL.push(q);
+
+const LOC_MAP = {
+  nyc_remote: {suffix:'New York', remote:false, noLoc:false},
+  nyc:        {suffix:'New York', remote:false, noLoc:false},
+  nj:         {suffix:'New Jersey', remote:false, noLoc:false},
+  ct:         {suffix:'Connecticut', remote:false, noLoc:false},
+  national:   {suffix:'', remote:true, noLoc:true},
+  remote:     {suffix:'', remote:true, noLoc:false},
+  sf:         {suffix:'San Francisco', remote:false, noLoc:false},
+  chicago:    {suffix:'Chicago', remote:false, noLoc:false},
+  boston:     {suffix:'Boston', remote:false, noLoc:false},
+  dc:         {suffix:'Washington DC', remote:false, noLoc:false},
+  austin:     {suffix:'Austin', remote:false, noLoc:false},
+  seattle:    {suffix:'Seattle', remote:false, noLoc:false},
+};
+
+const QUICK_MAP = {
+  'GRC':       'GRC Program Manager enterprise',
+  'Risk':      'Security Risk Manager enterprise',
+  'Converged': 'Converged Security Program Manager',
+  'IAM':       'Identity Governance Program Manager',
+  'Sr. SPM':   'Senior Security Program Manager',
+  'JPMC':      'Security Program Manager JPMorgan',
+  'Corp Sec':  'Corporate Security Program Manager enterprise',
+  'AI Sec':    'AI Security Governance Lead',
+};
+
+// ── Source detection ──────────────────────────────────────────────────────────
+const DIRECT_DOMAINS = ['greenhouse.io','lever.co','myworkdayjobs.com','icims.com',
+  'smartrecruiters.com','jobvite.com','taleo.net','successfactors.com','breezy.hr',
+  'bamboohr.com','recruitingbypaycor.com','jazz.co','pinpointhq.com'];
+
+function detectSource(u0) {
+  if (!u0) return {label:'Unknown', isDirect:false};
+  const u = u0.toLowerCase();
+  if (u.includes('linkedin.com'))   return {label:'LinkedIn',  isDirect:false};
+  if (u.includes('indeed.com'))     return {label:'Indeed',    isDirect:false};
+  if (u.includes('glassdoor.com'))  return {label:'Glassdoor', isDirect:false};
+  if (u.includes('ziprecruiter'))   return {label:'ZipRecruiter', isDirect:false};
+  for (const d of DIRECT_DOMAINS) {
+    if (u.includes(d)) return {label: d.split('.')[0].charAt(0).toUpperCase()+d.split('.')[0].slice(1), isDirect:true};
+  }
+  if (u.includes('careers') || u.includes('jobs.')) return {label:'Company', isDirect:true};
+  return {label:'Direct', isDirect:true};
+}
+
+function freshScore(postedAt) {
+  if (!postedAt) return 0;
+  const hrs = (Date.now() - new Date(postedAt).getTime()) / 3600000;
+  if (hrs <= 24)  return 12;
+  if (hrs <= 48)  return 8;
+  if (hrs <= 72)  return 4;
+  return 0;
+}
+function isFresh48(postedAt) {
+  if (!postedAt) return false;
+  return (Date.now() - new Date(postedAt).getTime()) < 48 * 3600000;
+}
+
+// ── FIT scoring (keyword/role match — no salary) ───────────────────────────────
+const STAFFING_BL  = ['apex systems','teksystems','insight global','cognizant staffing','cybercoders','kforce','genesis10','wipro','infosys','hcl america','staffmark','adecco','randstad','manpower','robert half','vaco','modis','leidos staffing'];
+const TITLE_BL     = ['associate program','junior','entry level','intern','coordinator','analyst i','analyst ii'];
+const IRRELEVANT   = ['security guard','security officer','loss prevention','armed security','patrol officer','surveillance officer'];
+const BONUS_KW     = ['converged security','physical security','pacs','iot security','incident response','vendor governance','multi-site','sla','operational resilience','cyber physical','security program','nist','iso 27001','enterprise program','risk framework','grc','third party risk','servicenow grc','servicenow irm','servicenow spm','risk register','control library'];
+
+const SCORE_CATS = [
+  {kws:['risk governance','risk management','grc','governance risk compliance','control framework','nist csf','iso 27001','soc 2','risk framework','servicenow grc','servicenow irm'], pts:22},
+  {kws:['compliance program','regulatory compliance','audit','security audit','compliance management','policy governance','security policy'], pts:22},
+  {kws:['enterprise risk','operational risk','technology risk','information risk','it risk','cyber risk','third party risk','vendor risk'], pts:22},
+  {kws:['converged security','physical security','cyber physical','pacs','physical access control'], pts:20},
+  {kws:['iot security','iot governance','smart building','facility security','site security','multi-site'], pts:20},
+  {kws:['program manager','program management','program director','enterprise program','portfolio management','program governance'], pts:18},
+  {kws:['executive','c-suite','ciso','board','stakeholder','executive reporting','senior leadership'], pts:18},
+  {kws:['security engineering','siem','soc','vulnerability','threat','zero trust','iam','access control'], pts:18},
+  {kws:['cloud','aws','azure','gcp','saas','vendor management','salesforce','servicenow','crowdstrike','palo alto'], pts:18},
+];
+
+function fitScore(job) {
+  const text     = [job.job_title||'', job.employer_name||'', job.job_description||''].join(' ').toLowerCase();
+  const title    = (job.job_title||'').toLowerCase();
+  const employer = (job.employer_name||'').toLowerCase();
+  let score = 0;
+
+  for (const a of STAFFING_BL)  { if (employer.includes(a)) return -40; }
+  for (const kw of IRRELEVANT)  { if (title.includes(kw))   return -50; }
+  for (const kw of TITLE_BL)    { if (title.includes(kw))   { score -= 30; break; } }
+
+  for (const cat of SCORE_CATS) { if (cat.kws.some(kw => text.includes(kw))) score += cat.pts; }
+  for (const kw of BONUS_KW)    { if (text.includes(kw)) score += 6; }
+
+  if (/senior|lead|principal|head of security/.test(title)) score += 10;
+  else if (/manager|program manager/.test(title) && /security|risk|grc|compliance/.test(title)) score += 6;
+
+  const src = detectSource(job.job_apply_link || job.job_google_link || '');
+  if (src.isDirect) score += 8;
+  score += freshScore(job.job_posted_at_datetime_utc);
+
+  return Math.min(Math.max(score, 0), 100);
+}
+
+function matchLevel(s) { return s >= 60 ? 'strong' : s >= 35 ? 'partial' : 'low'; }
+
+// ── VALUE scoring (comp-based, configurable, diminishing returns) ──────────────
+// floor→target: linear 20→70. target→ceiling: sqrt curve 70→100 (diminishing returns).
+function valueScore(maxSal, floor, target, ceiling) {
+  if (!maxSal) return null;
+  if (maxSal <= 0) return null;
+  if (maxSal <= floor) return Math.max(0, Math.round((maxSal / floor) * 20));
+  if (maxSal <= target) {
+    const pct = (maxSal - floor) / Math.max(1, (target - floor));
+    return Math.round(20 + pct * 50);
+  }
+  if (maxSal <= ceiling) {
+    const pct = (maxSal - target) / Math.max(1, (ceiling - target));
+    return Math.round(70 + Math.sqrt(pct) * 30);
+  }
+  return 100;
+}
+
+function companySize(desc) {
+  const d = (desc||'').toLowerCase();
+  if (/fortune 500|global enterprise|multinational|100,000/.test(d)) return 'Enterprise';
+  if (/mid-size|series [c-z]/.test(d)) return 'Mid-size';
+  if (/startup|series [ab]|seed/.test(d)) return 'Startup';
+  return null;
+}
+
+function fmtSal(min, max) {
+  if (!min && !max) return null;
+  const f = n => '$'+(n>=1000?Math.round(n/1000)+'K':n);
+  if (min && max) return f(min)+'–'+f(max);
+  return max ? 'up to '+f(max) : f(min)+'+';
+}
+
+function tierName(t) { return {1:'Gov/Risk',2:'Converged',3:'Core SPM',4:'Identity',5:'AI/Adj'}[t]||''; }
+
+function getDateWindow() {
+  if (!isSeeded) return 'month';
+  if (jobs.length < 50) return 'week';
+  return '3days';
+}
+
+// ══ RULE-BASED AI BRIEF ══════════════════════════════════════════════════════
+// No external API. Pure keyword-taxonomy matching against Micah's profile.
+const SKILL_DIMENSIONS = [
+  { name:'Risk Governance & Compliance',
+    kws:['risk governance','grc','nist csf','nist 800','iso 27001','soc 2','risk framework','compliance program','regulatory compliance','audit','control framework'],
+    have:true,
+    bullet:'Built and operated a NIST CSF-aligned risk governance program across 36 sites, achieving 99.7% uptime and an 83% reduction in false alarm volume.' },
+  { name:'Vendor & Third-Party Risk',
+    kws:['vendor management','vendor governance','third party risk','vendor risk','sla','service level agreement'],
+    have:true,
+    bullet:'Managed vendor governance and SLA compliance across 20+ security vendors, resolving contract disputes through detailed billing analysis.' },
+  { name:'Identity & Access Governance',
+    kws:['identity governance','iam','access control','identity access management','pam','sailpoint','access governance'],
+    have:true,
+    bullet:'Administered identity and access governance for converged PACS environments using SailPoint and RightCrowd across a 36-site footprint.' },
+  { name:'Converged / Physical Security',
+    kws:['converged security','physical security','cyber physical','pacs','iot security','multi-site','facility security','site security'],
+    have:true,
+    bullet:'Led converged physical/cyber security infrastructure spanning 36 sites, including a 22-site card reader modernization program.' },
+  { name:'Incident Response & Operations',
+    kws:['incident response','soc','siem','mttr','vulnerability','threat management','soar','edr','xdr','zero trust'],
+    have:'partial',
+    bullet:'Coordinated 400+ P0/P1 security incidents with a 5.2-hour mean time to resolution across a multi-site operating environment.' },
+  { name:'Executive & Stakeholder Reporting',
+    kws:['executive','c-suite','ciso','board','stakeholder','executive reporting','senior leadership'],
+    have:true,
+    bullet:'Owned executive QBR reporting with direct C-suite visibility, translating a multi-dimensional service metrics framework into strategic recommendations.' },
+  { name:'Enterprise Program Management',
+    kws:['program manager','program management','program governance','enterprise program','portfolio management','program director'],
+    have:true,
+    bullet:'Directed enterprise security program governance across 36 sites with full ownership of QBR cadence, vendor accountability, and SLA frameworks.' },
+  { name:'Cloud / Platform Security',
+    kws:['aws','azure','gcp','cloud','saas','servicenow','crowdstrike','palo alto'],
+    have:false, bullet:null },
+  { name:'People & Budget Leadership',
+    kws:['direct reports','manage a team','budget ownership','p&l','headcount','team of'],
+    have:false, bullet:null },
+];
+
+function computeBrief(job) {
+  const text = [job.title, job.company, job.desc].join(' ').toLowerCase();
+
+  const present = [];   // {dim, matchedKws}
+  const partial = [];
+  const missing = [];
+
+  for (const dim of SKILL_DIMENSIONS) {
+    const hits = dim.kws.filter(kw => text.includes(kw));
+    if (!hits.length) continue;
+    if (dim.have === true)        present.push({dim, hits});
+    else if (dim.have === 'partial') partial.push({dim, hits});
+    else                            missing.push({dim, hits});
+  }
+
+  const alignment = present.length
+    ? `Strong alignment in ${present.length} of ${SKILL_DIMENSIONS.filter(d=>d.have===true).length} core dimensions: ${present.map(p=>p.dim.name).join(', ')}.`
+    : 'No strong dimension matches detected — this role may sit outside your core profile.';
+
+  const gapParts = [];
+  if (missing.length) gapParts.push(`This JD emphasizes ${missing.map(m=>m.dim.name).join(', ')}, which aren't clearly represented in your background.`);
+  if (partial.length) gapParts.push(`${partial.map(p=>p.dim.name).join(', ')} appears in the JD — you have this, but it's worth emphasizing explicitly since it's only a partial coverage area for you.`);
+  if (!gapParts.length) gapParts.push('No major gaps detected against your core dimensions.');
+  const gap = gapParts.join(' ');
+
+  const kwPresent = [...present, ...partial].flatMap(p => p.hits).slice(0, 8);
+  const kwMissing = missing.flatMap(m => m.hits).slice(0, 8);
+
+  const bullets = present
+    .map(p => p.dim.bullet)
+    .filter(Boolean)
+    .slice(0, 3);
+  if (!bullets.length) {
+    bullets.push('General positioning bullet: 5 years progressive security program management spanning 36 sites, with 99.7% uptime and direct executive reporting — emphasize transferable program governance experience for this role.');
+  }
+
+  const flags = [];
+  if (job.isContract) flags.push('Contract role (not full-time) — confirm conversion potential or duration fit before investing application time.');
+  if (!job.src?.isDirect) flags.push(`Sourced via ${job.src?.label||'an aggregator'} — search the employer's own careers page for the original posting to apply through their ATS directly.`);
+  if (!/senior|lead|principal|director|manager/.test(job.title.toLowerCase())) flags.push('Title lacks a clear seniority marker — verify scope before applying to confirm it matches your target band.');
+  if (job.score < 35) flags.push('Overall fit score is low — read the full JD carefully before deciding whether this is worth pursuing.');
+  if (missing.length >= 2) flags.push(`Multiple emphasized dimensions (${missing.map(m=>m.dim.name).join(', ')}) fall outside your confirmed coverage — this may indicate a steeper reach.`);
+
+  let recommendation;
+  if (job.src?.isDirect && job.score >= 60) {
+    recommendation = `High fit, direct source. Apply via ${job.src.label} now — lead with your ${present[0]?.dim.name || 'program governance'} experience.`;
+  } else if (!job.src?.isDirect && job.score >= 60) {
+    recommendation = `High fit, but sourced via ${job.src?.label||'an aggregator'}. Find the original posting on the company's careers page first — applying direct often bypasses recruiter queues.`;
+  } else if (job.score >= 35) {
+    recommendation = `Partial fit. Worth a closer read — if you proceed, address ${missing[0]?.dim.name || kwMissing[0] || 'the gap areas'} directly in your application.`;
+  } else {
+    recommendation = 'Low fit relative to your profile. Likely not worth prioritizing unless the company or comp is a specific draw.';
+  }
+  if (job.isContract) recommendation += ' Note: this is a contract engagement.';
+
+  return {
+    alignment, gap,
+    keywords: { present: [...new Set(kwPresent)], missing: [...new Set(kwMissing)] },
+    bullets, flags, recommendation
+  };
+}
+
+function renderBrief(jobId) {
+  const el = document.getElementById('brief-'+jobId); if(!el) return;
+  const job = jobs.find(j=>j.id===jobId); if(!job) return;
+
+  if (briefLoading.has(jobId)) {
+    el.innerHTML = `<div class="brief-body" style="display:flex;align-items:center;padding:18px 16px;color:var(--ink-4);font-size:12px"><span class="brief-spinner">⟳</span> Generating with Gemini 1.5 Flash…</div>`;
+    return;
+  }
+
+  const d = briefData[jobId] || computeBrief(job);
+  const isAI = !!briefData[jobId];
+  const curTab = activeBriefTab[jobId] || 'alignment';
+
+  const kwPresent = (d.keywords?.present || []).map(k=>`<span class="kw-chip present">${k}</span>`).join('');
+  const kwMissing = (d.keywords?.missing || []).map(k=>`<span class="kw-chip">${k}</span>`).join('');
+  const bullets   = (d.bullets || []).map(b=>`<li>${b}</li>`).join('');
+  const flags     = (d.flags || []).map(f=>`<li>${f}</li>`).join('');
+  const atsTips   = d.ats_tips || '';
+
+  el.innerHTML = `
+    <div class="brief-tabs">
+      <div class="brief-tab${curTab==='alignment'?' on':''}" onclick="setBriefTab('${jobId}','alignment')">Alignment</div>
+      <div class="brief-tab${curTab==='keywords'?' on':''}" onclick="setBriefTab('${jobId}','keywords')">Keywords</div>
+      <div class="brief-tab${curTab==='bullets'?' on':''}"  onclick="setBriefTab('${jobId}','bullets')">Resume Bullets</div>
+      ${atsTips?`<div class="brief-tab${curTab==='ats'?' on':''}" onclick="setBriefTab('${jobId}','ats')">ATS Tips</div>`:''}
+      ${flags?`<div class="brief-tab${curTab==='flags'?' on':''}" onclick="setBriefTab('${jobId}','flags')">Flags</div>`:''}
+      <div class="brief-tab${curTab==='rec'?' on':''}" onclick="setBriefTab('${jobId}','rec')">Recommendation</div>
+      ${isAI?'<span style="margin-left:auto;font-size:9px;color:var(--sage);padding:0 8px;align-self:center;flex-shrink:0">✦ Gemini</span>':''}
+    </div>
+    <div class="brief-body">
+      <div class="brief-section${curTab==='alignment'?' on':''}" data-sec="alignment">
+        <div class="brief-row"><div class="brief-label">Alignment</div><div class="brief-text">${d.alignment}</div></div>
+        <div class="brief-row"><div class="brief-label">Gap</div><div class="brief-text">${d.gap}</div></div>
+      </div>
+      <div class="brief-section${curTab==='keywords'?' on':''}" data-sec="keywords">
+        ${kwPresent?`<div class="brief-row"><div class="brief-label">Covered in JD</div><div class="kw-list">${kwPresent}</div></div>`:''}
+        ${kwMissing?`<div class="brief-row"><div class="brief-label">Emphasized in JD, not in your confirmed coverage</div><div class="kw-list">${kwMissing}</div></div>`:''}
+        ${!kwPresent && !kwMissing ? '<div class="brief-text">No strong keyword signals detected.</div>':''}
+      </div>
+      <div class="brief-section${curTab==='bullets'?' on':''}" data-sec="bullets">
+        <div class="brief-label" style="margin-bottom:8px">Tailored resume bullets</div>
+        <ul class="bullet-list">${bullets}</ul>
+      </div>
+      ${atsTips?`<div class="brief-section${curTab==='ats'?' on':''}" data-sec="ats">
+        <div class="brief-label" style="margin-bottom:8px">ATS Optimization</div>
+        <div class="ats-tips-box">${atsTips}</div>
+      </div>`:''}
+      ${flags?`<div class="brief-section${curTab==='flags'?' on':''}" data-sec="flags">
+        <div class="brief-label" style="margin-bottom:8px">Watch out for</div>
+        <ul class="flag-list">${flags}</ul>
+      </div>`:''}
+      <div class="brief-section${curTab==='rec'?' on':''}" data-sec="rec">
+        <div class="brief-label" style="margin-bottom:8px">Application recommendation</div>
+        <div class="rec-box">${d.recommendation}</div>
+      </div>
+    </div>`;
+}
+
+function setBriefTab(jobId, tab) {
+  activeBriefTab[jobId] = tab;
+  renderBrief(jobId);
+}
+
+async function toggleBrief(jobId) {
+  if (briefOpen.has(jobId)) { briefOpen.delete(jobId); render(); return; }
+  briefOpen.add(jobId);
+  if (!activeBriefTab[jobId]) activeBriefTab[jobId] = 'alignment';
+  render();
+  if (!briefData[jobId] && !briefLoading.has(jobId)) {
+    const job = jobs.find(j => j.id === jobId);
+    if (!job) return;
+    briefLoading.add(jobId);
+    render();
+    try {
+      const r = await fetch('/brief', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: job.title, company: job.company, description: job.desc, score: job.score, isDirect: job.src?.isDirect, source: job.src?.label })
+      });
+      if (r.ok) {
+        briefData[jobId] = await r.json();
+        await logClientEvent('brief_opened', { title: job.title, score: job.score });
+      }
+    } catch(e) {}
+    briefLoading.delete(jobId);
+    render();
+  }
+}
+
+// ── State ─────────────────────────────────────────────────────────────────────
+let jobs=[], statuses={}, seenIds=new Set(), apiCalls=0, poolIdx=0;
+let activeTab='all', activeSort='fit';
+let filters={remote:false, salary:true, direct:false};
+let activeBriefTab={}, briefOpen=new Set();
+let briefData={}, briefLoading=new Set();
+
+async function logClientEvent(type, payload = {}) {
+  try { await fetch('/log', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({event_type:type, payload}) }); }
+  catch(e) {}
+}
+let isSeeded=false, burstN=3;
+let comp = {floor:120000, target:175000, ceiling:250000};
+
+function snapshot() {
+  return {
+    jobs, statuses, seen:[...seenIds], apiCalls, poolIdx, isSeeded, burstN, comp
+  };
+}
+
+function applySnapshot(s) {
+  if (!s || typeof s !== 'object') return;
+  if (Array.isArray(s.jobs))     jobs = s.jobs;
+  if (s.statuses)                statuses = s.statuses;
+  if (Array.isArray(s.seen))     seenIds = new Set(s.seen);
+  if (typeof s.apiCalls==='number') apiCalls = s.apiCalls;
+  if (typeof s.poolIdx==='number')  poolIdx  = s.poolIdx;
+  if (typeof s.isSeeded==='boolean') isSeeded = s.isSeeded;
+  if (typeof s.burstN==='number')   burstN   = s.burstN;
+  if (s.comp)                     comp = {...comp, ...s.comp};
+}
+
+function setSync(state) {
+  const dot = document.getElementById('syncDot');
+  const lbl = document.getElementById('syncLabel');
+  dot.className = 'sync-dot' + (state==='ok'?' ok':state==='err'?' err':'');
+  lbl.textContent = state==='ok'?'Synced':state==='err'?'Local only':'Local';
+}
+
+async function save() {
+  const snap = snapshot();
+  try { localStorage.setItem('jr6_state', JSON.stringify(snap)); } catch(e){}
+  try {
+    const r = await fetch('/state', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(snap)
+    });
+    setSync(r.ok ? 'ok' : 'err');
+  } catch(e) { setSync('err'); }
+}
+
+async function load() {
+  // Try server first
+  try {
+    const r = await fetch('/state');
+    if (r.ok) {
+      const s = await r.json();
+      if (s && s.jobs) {
+        applySnapshot(s);
+        setSync('ok');
+        return;
+      }
+    }
+  } catch(e) {}
+  // Fallback to localStorage
+  try {
+    const raw = localStorage.getItem('jr6_state');
+    if (raw) applySnapshot(JSON.parse(raw));
+  } catch(e) {}
+  setSync('err');
+}
+
+// ── Fetch ─────────────────────────────────────────────────────────────────────
+async function fetchOne(query, locKey, datePosted) {
+  const loc = LOC_MAP[locKey] || LOC_MAP.nyc;
+  const q   = loc.noLoc ? query : (query + (loc.suffix ? ' '+loc.suffix : ''));
+  const p   = new URLSearchParams({query:q, location:locKey, date_posted:datePosted});
+  if (loc.remote) p.set('remote_only','true');
+  const r = await fetch('/search?'+p);
+  const d = await r.json();
+  if (d.error) throw new Error(d.error);
+  return d.data || [];
+}
+
+// ── Scan ──────────────────────────────────────────────────────────────────────
+async function runScan() {
+  const remaining = MONTHLY_BUDGET - apiCalls;
+  if (remaining <= 0) { showError('Monthly API budget exhausted.'); return; }
+  const btn = document.getElementById('scanBtn');
+  btn.disabled = true; btn.textContent = '⟳ Scanning…';
+  hideError();
+
+  const datePosted   = getDateWindow();
+  const customQ      = document.getElementById('customQuery').value.trim();
+  const locKey       = document.getElementById('locationFilter').value;
+  const isNycRemote  = locKey === 'nyc_remote';
+
+  let queries = [];
+  if (customQ) {
+    queries = [{q:customQ, tier:0, cat:'Custom'}];
+  } else {
+    const seen = new Set();
+    let idx = poolIdx;
+    const cap = Math.min(burstN, remaining, isNycRemote ? Math.floor(remaining/2) : remaining);
+    while (queries.length < cap) {
+      const q = POOL[idx % POOL.length];
+      if (!seen.has(q.q)) { seen.add(q.q); queries.push(q); }
+      idx++;
+      if (idx > poolIdx + POOL.length) break;
+    }
+  }
+
+  const winLabel = !isSeeded ? 'Seed 30d' : jobs.length < 50 ? 'Live 7d' : 'Live 3d';
+  showInfo(`${winLabel} · ${queries.length} quer${queries.length>1?'ies':'y'} · ${locKey}`);
+
+  try {
+    let allRaw = [];
+    for (const qObj of queries) {
+      if (isNycRemote) {
+        const [nyc, rem] = await Promise.all([
+          fetchOne(qObj.q, 'nyc', datePosted),
+          fetchOne(qObj.q, 'remote', datePosted)
+        ]);
+        apiCalls += 2;
+        allRaw.push(...nyc, ...rem);
+      } else {
+        const res = await fetchOne(qObj.q, locKey, datePosted);
+        apiCalls += 1;
+        allRaw.push(...res);
+      }
+    }
+
+    if (!customQ) poolIdx = (poolIdx + queries.length) % POOL.length;
+
+    let newCount = 0;
+    const now = Date.now();
+
+    for (const j of allRaw) {
+      const id = j.job_id;
+      if (!id || seenIds.has(id)) continue;
+      const fScore = fitScore(j);
+      if (fScore < 0) continue;
+      if (filters.salary && j.job_max_salary > 0 && j.job_max_salary < comp.floor) continue;
+
+      const url = j.job_apply_link || j.job_google_link || '#';
+      const src = detectSource(url);
+      const isContract = (j.job_employment_type||'').toUpperCase().includes('CONTRACT');
+
+      seenIds.add(id); newCount++;
+      const matchQ = customQ ? null : queries.find(q => {
+        const t = (j.job_title||'').toLowerCase();
+        return q.q.toLowerCase().split(' ').slice(0,2).every(w => t.includes(w));
+      }) || queries[0];
+
+      jobs.unshift({
+        id, title:j.job_title||'Unknown Role',
+        company:j.employer_name||'Unknown Company',
+        location:j.job_city?`${j.job_city}, ${j.job_state||''}`:(j.job_is_remote?'Remote':'See posting'),
+        remote:!!j.job_is_remote,
+        salary:fmtSal(j.job_min_salary,j.job_max_salary),
+        minSal:j.job_min_salary||0, maxSal:j.job_max_salary||0,
+        score:fScore, match:matchLevel(fScore),
+        size:companySize(j.job_description),
+        url, src,
+        isContract,
+        fresh:isFresh48(j.job_posted_at_datetime_utc),
+        posted:j.job_posted_at_datetime_utc||'',
+        desc:(j.job_description||'').substring(0,800),
+        ts:now,
+        tier:matchQ?.tier||0,
+      });
+    }
+
+    if (!isSeeded) isSeeded = true;
+    await save(); render(); updateModePill(); renderQueue();
+    scheduleNext();
+
+    const strongNew = jobs.filter(j=>j.score>=60&&j.ts===now).length;
+    const directNew = jobs.filter(j=>j.src?.isDirect&&j.ts===now).length;
+    if (newCount > 0) {
+      showToast(`${newCount} new role${newCount>1?'s':''} surfaced`,
+        [strongNew>0?`${strongNew} strong`:'', directNew>0?`${directNew} direct ATS`:''].filter(Boolean).join(' · ') || 'Check the feed');
+    } else {
+      showInfo('Scan complete · No new roles since last scan');
+    }
+  } catch(err) {
+    showError('Scan failed: '+err.message);
+  } finally {
+    btn.disabled=false; btn.textContent='▶ Scan Now'; updateStats();
+  }
+}
+
+// ── Render ────────────────────────────────────────────────────────────────────
+function getVisible() {
+  let list = jobs.map(j => ({...j, valueScore: valueScore(j.maxSal, comp.floor, comp.target, comp.ceiling)}));
+
+  if (activeTab==='strong')    list=list.filter(j=>j.match==='strong');
+  else if (activeTab==='partial')   list=list.filter(j=>j.match==='partial');
+  else if (activeTab==='fresh')     list=list.filter(j=>j.fresh);
+  else if (activeTab==='direct')    list=list.filter(j=>j.src?.isDirect);
+  else if (activeTab==='new')       list=list.filter(j=>!statuses[j.id]);
+  else if (activeTab==='pipeline')  list=list.filter(j=>statuses[j.id]==='saved');
+  else if (activeTab==='applied')   list=list.filter(j=>statuses[j.id]==='applied');
+  else if (activeTab==='interview') list=list.filter(j=>statuses[j.id]==='interview');
+  if (filters.remote) list=list.filter(j=>j.remote);
+  if (filters.salary) list=list.filter(j=>!j.maxSal||j.maxSal>=comp.floor);
+  if (filters.direct) list=list.filter(j=>j.src?.isDirect);
+
+  if (activeSort==='fit')      list.sort((a,b)=>b.score-a.score);
+  else if (activeSort==='value') list.sort((a,b)=>(b.valueScore??-1)-(a.valueScore??-1));
+  else if (activeSort==='blended') list.sort((a,b)=>{
+    const ba = a.valueScore!=null ? (a.score+a.valueScore)/2 : a.score;
+    const bb = b.valueScore!=null ? (b.score+b.valueScore)/2 : b.score;
+    return bb-ba;
+  });
+  else if (activeSort==='recent') list.sort((a,b)=>b.ts-a.ts);
+
+  return list;
+}
+
+function valueRingClass(v) {
+  if (v == null) return 'ring-null';
+  if (v >= 70) return 'ring-high';
+  if (v >= 40) return 'ring-mid';
+  return 'ring-low';
+}
+
+function render() {
+  const visible = getVisible();
+  const all     = jobs;
+
+  document.getElementById('cnt-all').textContent      = all.length;
+  document.getElementById('cnt-strong').textContent   = all.filter(j=>j.match==='strong').length;
+  document.getElementById('cnt-partial').textContent  = all.filter(j=>j.match==='partial').length;
+  document.getElementById('cnt-fresh').textContent    = all.filter(j=>j.fresh).length;
+  document.getElementById('cnt-direct').textContent   = all.filter(j=>j.src?.isDirect).length;
+  document.getElementById('cnt-new').textContent      = all.filter(j=>!statuses[j.id]).length;
+  document.getElementById('cnt-pipeline').textContent = all.filter(j=>statuses[j.id]==='saved').length;
+  document.getElementById('cnt-applied').textContent  = all.filter(j=>statuses[j.id]==='applied').length;
+  document.getElementById('cnt-interview').textContent= all.filter(j=>statuses[j.id]==='interview').length;
+  document.getElementById('resultsLbl').textContent   = visible.length+(visible.length===1?' role':' roles');
+
+  const c = document.getElementById('cardContainer');
+  if (!visible.length) {
+    c.innerHTML = `<div class="empty"><div class="empty-mark">◎</div><h3>No roles match</h3><p>Adjust filters or run a scan</p></div>`;
+    return;
+  }
+
+  c.innerHTML = visible.map((job, i) => {
+    const fc = job.score>=60?'ring-high':job.score>=35?'ring-mid':'ring-low';
+    const vc = valueRingClass(job.valueScore);
+    const mc = `match-${job.match}`;
+    const tags = [];
+    if (job.match==='strong')  tags.push(`<span class="tag tag-strong">Strong match</span>`);
+    else if (job.match==='partial') tags.push(`<span class="tag tag-partial">Partial</span>`);
+    else tags.push(`<span class="tag tag-low">Low</span>`);
+    if (!statuses[job.id])    tags.push(`<span class="tag tag-new">New</span>`);
+    if (job.fresh)            tags.push(`<span class="tag tag-fresh">⚡ Fresh</span>`);
+    if (job.src?.isDirect)    tags.push(`<span class="tag tag-direct">⬡ Direct ATS</span>`);
+    if (job.remote)           tags.push(`<span class="tag tag-remote">Remote</span>`);
+    if (job.isContract)       tags.push(`<span class="tag tag-contract">Contract</span>`);
+    if (job.salary)           tags.push(`<span class="tag tag-salary">${job.salary}</span>`);
+    if (job.size)             tags.push(`<span class="tag tag-size">${job.size}</span>`);
+    if (job.tier)             tags.push(`<span class="tag tag-t${job.tier}">T${job.tier} ${tierName(job.tier)}</span>`);
+
+    const status   = statuses[job.id]||'';
+    const isOpen   = briefOpen.has(job.id);
+    const isDirectSrc = job.src?.isDirect;
+    const delay    = Math.min(i*25, 250);
+    const vDisplay = job.valueScore==null ? '—' : job.valueScore;
+
+    return `<div class="job-card ${mc}" id="card-${job.id}" style="animation-delay:${delay}ms">
+      <div class="card-head">
+        <div class="card-main">
+          <div class="card-title">${job.title}</div>
+          <div class="card-sub">
+            <span class="card-co">${job.company}</span>
+            <span class="card-dot">·</span>
+            <span>${job.location}</span>
+            ${job.src?`<span class="card-dot">·</span><span class="source-badge src-${job.src.isDirect?'direct':'linkedin'}">${job.src.label}</span>`:''}
+          </div>
+        </div>
+        <div class="score-cluster">
+          <div class="score-ring small ${vc}">${vDisplay}<span class="ring-label">Value</span></div>
+          <div class="score-ring ${fc}">${job.score}<span class="ring-label">Fit</span></div>
+        </div>
+      </div>
+      <div class="card-tags">${tags.join('')}</div>
+      <div class="card-foot">
+        <button class="card-btn" onclick="toggleBrief('${job.id}')">${isOpen?'Hide brief':'Brief'}</button>
+        <button class="card-btn ${isDirectSrc?'direct-apply':'apply-btn'}" onclick="window.open('${job.url}','_blank')">${isDirectSrc?'⬡ Apply Direct':'Apply ↗'}</button>
+        <select class="status-sel" onchange="setStatus('${job.id}',this.value)">
+          <option value="" ${!status?'selected':''}>— Track —</option>
+          <option value="saved"     ${status==='saved'?'selected':''}>Saved</option>
+          <option value="applied"   ${status==='applied'?'selected':''}>Applied</option>
+          <option value="interview" ${status==='interview'?'selected':''}>Interview</option>
+          <option value="offer"     ${status==='offer'?'selected':''}>Offer ✓</option>
+          <option value="rejected"  ${status==='rejected'?'selected':''}>Rejected</option>
+        </select>
+      </div>
+      ${isOpen?`<div class="brief-wrap" id="brief-${job.id}"></div>`:''}
+    </div>`;
+  }).join('');
+
+  for (const id of briefOpen) renderBrief(id);
+  document.getElementById('exportRow').style.display = jobs.length?'flex':'none';
+  updateStats();
+}
+
+function updateStats() {
+  document.getElementById('statSurfaced').textContent = jobs.length;
+  document.getElementById('statStrong').textContent   = jobs.filter(j=>j.match==='strong').length;
+  document.getElementById('statNew').textContent      = jobs.filter(j=>!statuses[j.id]).length;
+  document.getElementById('statPipeline').textContent = Object.values(statuses).filter(s=>['saved','applied','interview'].includes(s)).length;
+  document.getElementById('statDirect').textContent   = jobs.filter(j=>j.src?.isDirect).length;
+  document.getElementById('statCalls').textContent    = apiCalls;
+  const pct = Math.round((apiCalls/MONTHLY_BUDGET)*100);
+  document.getElementById('budgetTxt').textContent    = `${apiCalls} / ${MONTHLY_BUDGET} calls`;
+  document.getElementById('budgetFill').style.width   = pct+'%';
+  document.getElementById('burstN').textContent       = burstN;
+}
+
+function updateModePill() {
+  const pill = document.getElementById('modePill');
+  const w = getDateWindow();
+  if (!isSeeded) { pill.className='mode-chip mode-seed'; pill.textContent='Seed 30d'; }
+  else if (w==='week') { pill.className='mode-chip mode-live'; pill.textContent='Live 7d'; }
+  else { pill.className='mode-chip mode-live'; pill.textContent='Live 3d'; }
+}
+
+function renderQueue() {
+  const next8=[]; const seen=new Set();
+  let idx=poolIdx%POOL.length;
+  while(next8.length<8){
+    const q=POOL[idx%POOL.length];
+    if(!seen.has(q.q)){seen.add(q.q);next8.push({...q,cur:next8.length===0});}
+    idx++;
+    if(idx>poolIdx+POOL.length)break;
+  }
+  document.getElementById('queueList').innerHTML=next8.map(q=>`
+    <div class="q-item${q.cur?' q-cur':''}">
+      <div class="q-dot${q.cur?' cur':''}"></div>
+      <span class="t-chip tag-t${q.tier}" style="font-size:8px;padding:1px 4px;flex-shrink:0">T${q.tier}</span>
+      <span class="q-txt">${q.q}</span>
+    </div>`).join('');
+}
+
+function renderQuick() {
+  document.getElementById('quickGrid').innerHTML=Object.entries(QUICK_MAP).map(([l,q])=>
+    `<button class="quick-btn" onclick="quickScan('${q}')">${l}</button>`
+  ).join('');
+}
+
+function scheduleNext() {
+  const next=new Date(Date.now()+24*60*60*1000);
+  document.getElementById('nextLabel').textContent='Next: '+next.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+}
+
+function adjBurst(d){burstN=Math.max(1,Math.min(5,burstN+d));document.getElementById('burstN').textContent=burstN;save();}
+
+function setTab(t){activeTab=t;document.querySelectorAll('.tab').forEach(el=>el.classList.remove('on'));document.getElementById('tab-'+t).classList.add('on');render();}
+function setSort(s){activeSort=s;document.querySelectorAll('.sort-btn').forEach(b=>b.classList.remove('on'));document.getElementById('sort-'+s).classList.add('on');render();}
+function toggleF(f){
+  filters[f]=!filters[f];
+  const btn=document.getElementById(f==='direct'?'directTgl':f+'Tgl');
+  const cls=f==='direct'?'direct-on':'on';
+  if(filters[f]){btn.classList.add(cls);}else{btn.classList.remove(cls);btn.classList.remove('on');}
+  render();
+}
+function setStatus(id,s){if(s){statuses[id]=s;logClientEvent('status_changed',{jobId:id,status:s});}else delete statuses[id];save();render();}
+async function quickScan(q){document.getElementById('customQuery').value=q;await runScan();document.getElementById('customQuery').value='';}
+
+function updateComp(){
+  const f = parseInt(document.getElementById('compFloor').value)||120000;
+  const t = parseInt(document.getElementById('compTarget').value)||175000;
+  const c = parseInt(document.getElementById('compCeiling').value)||250000;
+  comp = {floor:f, target:Math.max(t,f+1), ceiling:Math.max(c,t+1)};
+  save(); render();
+}
+
+function exportCSV(){
+  const rows=[['Title','Company','Location','Fit','Value','Match','Tier','Salary','Source','Direct','Contract','Status','URL']];
+  for(const j of jobs){
+    const v = valueScore(j.maxSal, comp.floor, comp.target, comp.ceiling);
+    rows.push([j.title,j.company,j.location,j.score,v==null?'':v,j.match,tierName(j.tier),j.salary||'',j.src?.label||'',j.src?.isDirect?'Yes':'No',j.isContract?'Yes':'No',statuses[j.id]||'',j.url||'']);
+  }
+  dl('jobradar.csv',rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n'),'text/csv');
+}
+function exportJSON(){dl('jobradar.json',JSON.stringify(jobs.map(j=>({...j,status:statuses[j.id]||'',tierName:tierName(j.tier),valueScore:valueScore(j.maxSal,comp.floor,comp.target,comp.ceiling)})),null,2),'application/json');}
+function dl(n,c,t){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([c],{type:t}));a.download=n;a.click();}
+function showToast(title,body){document.getElementById('toastTitle').textContent=title;document.getElementById('toastBody').textContent=body;const t=document.getElementById('toast');t.classList.add('show');setTimeout(()=>t.classList.remove('show'),4500);}
+function showError(msg){const el=document.getElementById('errorBanner');el.textContent=msg;el.style.display='flex';}
+function hideError(){document.getElementById('errorBanner').style.display='none';}
+function showInfo(msg){const el=document.getElementById('infoBanner');el.textContent=msg;el.style.display='flex';}
+
+// ── Weekly Report ─────────────────────────────────────────────────────────────
+async function showWeeklyReport() {
+  document.getElementById('weeklyModal').classList.remove('hidden');
+  document.getElementById('weeklyModalBody').innerHTML = '<div class="modal-loading"><span class="brief-spinner">⟳</span> Fetching weekly assessment…</div>';
+  try {
+    const r = await fetch('/logs/weekly');
+    const data = await r.json();
+    if (data.error) throw new Error(data.error);
+    const { stats, assessment } = data;
+    const scanCount   = stats.scan_complete || 0;
+    const briefCount  = stats.brief_generated || 0;
+    const statusCount = stats.status_changed || 0;
+    const errorCount  = stats.error || 0;
+
+    let html = `<div class="weekly-stat-grid">
+      <div class="weekly-stat"><div class="weekly-stat-n">${scanCount}</div><div class="weekly-stat-l">Scans</div></div>
+      <div class="weekly-stat"><div class="weekly-stat-n">${briefCount}</div><div class="weekly-stat-l">Briefs</div></div>
+      <div class="weekly-stat"><div class="weekly-stat-n">${statusCount}</div><div class="weekly-stat-l">Status Updates</div></div>
+    </div>`;
+
+    if (assessment) {
+      if (assessment.search_volume) html += `<div class="weekly-section" style="margin-top:16px"><div class="weekly-label">Activity</div><div style="font-size:12px;color:var(--text-2);line-height:1.6">${assessment.search_volume}</div></div>`;
+      if (assessment.highlights?.length) html += `<div class="weekly-section"><div class="weekly-label">Highlights</div><ul class="weekly-list">${assessment.highlights.map(h=>`<li>${h}</li>`).join('')}</ul></div>`;
+      if (assessment.recommendations?.length) html += `<div class="weekly-section"><div class="weekly-label">Recommendations</div><ul class="weekly-list">${assessment.recommendations.map(r=>`<li>${r}</li>`).join('')}</ul></div>`;
+      if (assessment.issues?.filter(Boolean).length) html += `<div class="weekly-section"><div class="weekly-label">Issues</div><ul class="weekly-list">${assessment.issues.filter(Boolean).map(i=>`<li>${i}</li>`).join('')}</ul></div>`;
+      if (assessment.technical_notes?.filter(Boolean).length) html += `<div class="weekly-section"><div class="weekly-label">Technical Notes</div><ul class="weekly-list">${assessment.technical_notes.filter(Boolean).map(n=>`<li>${n}</li>`).join('')}</ul></div>`;
+      html += `<div style="font-size:10px;color:var(--ink-4);text-align:right;margin-top:8px">✦ Assessed by Gemini 1.5 Flash</div>`;
+    } else {
+      html += `<div style="font-size:12px;color:var(--text-3);margin-top:14px;line-height:1.6">${data.note || 'Set GEMINI_API_KEY for AI assessment.'}</div>`;
+    }
+
+    if (errorCount > 0) html += `<div style="font-size:11px;color:var(--terra);margin-top:10px">${errorCount} error${errorCount>1?'s':''} logged this week — check server logs.</div>`;
+    document.getElementById('weeklyModalBody').innerHTML = html;
+  } catch(e) {
+    document.getElementById('weeklyModalBody').innerHTML = `<div style="padding:20px;color:var(--terra);font-size:13px">Failed to load report: ${e.message}</div>`;
+  }
+}
+
+function closeWeeklyModal() {
+  document.getElementById('weeklyModal').classList.add('hidden');
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+(async function init(){
+  await load();
+  document.getElementById('compFloor').value   = comp.floor;
+  document.getElementById('compTarget').value  = comp.target;
+  document.getElementById('compCeiling').value = comp.ceiling;
+  updateStats(); updateModePill(); renderQueue(); renderQuick(); render();
+  document.getElementById('rotatingQ').textContent = POOL[poolIdx % POOL.length].q;
+})();
+</script>
+</body>
+</html>
