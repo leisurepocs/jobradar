@@ -3,6 +3,11 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="JobRadar"/>
+<meta name="theme-color" content="#2D4A3E"/>
 <title>JobRadar</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
@@ -907,7 +912,7 @@ async function toggleBrief(jobId) {
   briefOpen.add(jobId);
   if (!activeBriefTab[jobId]) activeBriefTab[jobId] = 'alignment';
   render();
-  if (!briefData[jobId] && !briefLoading.has(jobId)) {
+  if (geminiEnabled && !briefData[jobId] && !briefLoading.has(jobId)) {
     const job = jobs.find(j => j.id === jobId);
     if (!job) return;
     briefLoading.add(jobId);
@@ -934,6 +939,7 @@ let activeTab='all', activeSort='fit';
 let filters={remote:false, salary:true, direct:false};
 let activeBriefTab={}, briefOpen=new Set();
 let briefData={}, briefLoading=new Set();
+let geminiEnabled = false;
 
 async function logClientEvent(type, payload = {}) {
   try { await fetch('/log', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({event_type:type, payload}) }); }
@@ -1367,6 +1373,12 @@ function closeWeeklyModal() {
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 (async function init(){
+  // Check server capabilities
+  try {
+    const h = await fetch('/health');
+    if (h.ok) { const d = await h.json(); geminiEnabled = !!d.gemini; }
+  } catch(e) {}
+
   await load();
   document.getElementById('compFloor').value   = comp.floor;
   document.getElementById('compTarget').value  = comp.target;
