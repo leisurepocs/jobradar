@@ -378,6 +378,8 @@ BREVITY RULE — applies to every field: Hard length limits are enforced. Never 
 
 12. SOURCE TRANSPARENCY: Claims in alignment/trajectory_note/reasoning/recommendation_note that draw on training knowledge, not JD or resume text. ≤15 words each: "In [field]: [claim] — training knowledge, not JD/resume". Return null if all claims come from provided documents.
 
+13. RESUME FOCUS: Point to the candidate's ACTUAL existing resume bullets/roles that need attention for THIS job — which to lead with, which to reword toward the JD's exact language, which to de-emphasize. Reference the real bullet or role (name the company/achievement), never generic advice. 1-3 entries.
+
 Return ONLY a raw JSON object (no markdown code fences) with this exact structure:
 {
   "data_quality": "high" | "medium" | "low",
@@ -406,6 +408,7 @@ Return ONLY a raw JSON object (no markdown code fences) with this exact structur
     "platform/technical depth bullet — bridge resume language + JD phrasing"
   ],
   "interview_questions": ["≤25 words each, 1-2 questions for CANDIDATE to ask INTERVIEWER — test scope/authority/growth path"],
+  "resume_focus": ["1-3 entries, ≤25 words each: name the actual resume role/bullet (company + achievement) — [LEAD with it | REWORD toward '<JD term>' | DE-EMPHASIZE] and why for this job"],
   "reasoning": "2 sentences: (1) trajectory driver with specific JD signal + resume data; (2) recommendation driver",
   "recommendation": "pursue" | "pursue_with_caveat" | "deprioritize",
   "recommendation_note": "1 sentence, ≤35 words: trajectory tier + key caveat + salary fit if available",

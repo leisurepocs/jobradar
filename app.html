@@ -470,9 +470,11 @@ textarea.pi { height:74px; padding:10px 12px; resize:vertical; line-height:1.5; 
 
 <div class="intel-bar" id="intelBar">
   <div class="intel-item">
-    <span id="budgetTxt">0 / 200 calls</span>
+    <span id="budgetTxt">0 / 185 calls</span>
     <div class="budget-track"><div class="budget-fill" id="budgetFill" style="width:0%"></div></div>
   </div>
+  <div class="intel-sep"></div>
+  <div class="intel-item">AI <span id="aiSpend">~$0.00</span></div>
   <div class="intel-sep"></div>
   <div class="intel-item">Mode <span class="mode-chip mode-seed" id="modePill">Seed</span></div>
   <div class="intel-sep"></div>
@@ -699,7 +701,10 @@ function openJobUrl(btn) {
   try { const p=new URL(btn.dataset.href||''); if(p.protocol==='https:'||p.protocol==='http:') window.open(p.href,'_blank'); } catch(e){}
 }
 
-const MONTHLY_BUDGET = 200;
+const MONTHLY_BUDGET = 200;   // hard JSearch cap
+const MONTHLY_TARGET = 185;   // pace toward this, leaving a 15-call buffer
+const AI_TARGET_USD  = 10;    // aim under $10/mo Anthropic spend (hard ceiling ~$15)
+const BRIEF_COST_USD = 0.05;  // est. per Sonnet brief (~5k in + ~2.5k out)
 
 // ── Query pool ────────────────────────────────────────────────────────────────
 const QUERIES = [
@@ -748,8 +753,14 @@ const QUERIES = [
   {q:'GRC Program Manager Citigroup',cat:'Gov/Risk',tier:1,w:3},
 ];
 
+// Weight-expand, then shuffle once. Without the shuffle the weighted copies sit in
+// consecutive runs (q1×5, q2×5, …), which trapped the linear cursor at the front of the
+// pool and starved the low-weight tail (Identity/AI/Adjacent). Shuffling spreads each
+// query's copies so any single burst spans multiple tiers and the cursor covers the
+// whole pool over a month. (rotation fix, 2026-06-28)
 const POOL = [];
 for (const q of QUERIES) for (let i = 0; i < q.w; i++) POOL.push(q);
+for (let i = POOL.length - 1; i > 0; i--) { const j = Math.floor(Math.random()*(i+1)); [POOL[i],POOL[j]]=[POOL[j],POOL[i]]; }
 
 // Regions are scoped to the candidate's actual eligibility (candidate-profile.md §5:
 // relocation outside the NYC metro is a hard disqualifier). Single-city onsite markets
@@ -1105,6 +1116,7 @@ function renderBrief(jobId) {
   const assumptions  = (d.assumptions || []).map(a=>`<li>${esc(a)}</li>`).join('');
   const biasFlags    = (d.bias_flags || []).map(b=>`<li>${esc(b)}</li>`).join('');
   const trainingFlags = (d.training_knowledge_flags || []).map(t=>`<li>${esc(t)}</li>`).join('');
+  const resumeFocus  = (d.resume_focus || []).map(f=>`<li>${esc(f)}</li>`).join('');
   const dqLow        = d.data_quality === 'low';
   const dqMed        = d.data_quality === 'medium';
   const dqMark       = dqLow ? ' <span style="color:var(--terra);font-size:9px">⚑</span>' : '';
@@ -1146,6 +1158,7 @@ function renderBrief(jobId) {
         ${!kwPresent && !kwMissing ? '<div class="brief-text">No strong keyword signals detected.</div>':''}
       </div>
       <div class="brief-section${curTab==='bullets'?' on':''}" data-sec="bullets">
+        ${resumeFocus?`<div class="brief-label" style="margin-bottom:8px;color:var(--terra)">Your resume — what needs attention for this job</div><ul class="flag-list" style="margin-bottom:14px">${resumeFocus}</ul>`:''}
         <div class="brief-label" style="margin-bottom:8px">Tailored resume bullets</div>
         <ul class="bullet-list">${bullets}</ul>
       </div>
@@ -1193,6 +1206,7 @@ async function toggleBrief(jobId) {
       });
       if (r.ok) {
         briefData[jobId] = await r.json();
+        rolloverMonth(); briefsThisMonth++; save();
         await logClientEvent('brief_opened', { title: job.title, score: job.score });
       }
     } catch(e) {}
@@ -1217,11 +1231,21 @@ async function logClientEvent(type, payload = {}) {
   catch(e) {}
 }
 let isSeeded=false, burstN=3;
-let comp = {floor:130000, target:175000, ceiling:250000};
+let comp = {floor:120000, target:165000, ceiling:220000};
+let budgetMonth='', briefsThisMonth=0;
+
+function curMonth(){ return new Date().toISOString().slice(0,7); } // 'YYYY-MM'
+
+// Reset the monthly API + AI counters when the calendar month rolls over.
+function rolloverMonth() {
+  const m = curMonth();
+  if (budgetMonth !== m) { budgetMonth = m; apiCalls = 0; briefsThisMonth = 0; }
+}
 
 function snapshot() {
   return {
-    jobs, statuses, seen:[...seenIds], apiCalls, poolIdx, isSeeded, burstN, comp
+    jobs, statuses, seen:[...seenIds], apiCalls, poolIdx, isSeeded, burstN, comp,
+    budgetMonth, briefsThisMonth
   };
 }
 
@@ -1235,6 +1259,8 @@ function applySnapshot(s) {
   if (typeof s.isSeeded==='boolean') isSeeded = s.isSeeded;
   if (typeof s.burstN==='number')   burstN   = s.burstN;
   if (s.comp)                     comp = {...comp, ...s.comp};
+  if (typeof s.budgetMonth==='string') budgetMonth = s.budgetMonth;
+  if (typeof s.briefsThisMonth==='number') briefsThisMonth = s.briefsThisMonth;
 }
 
 function setSync(state) {
@@ -1291,8 +1317,14 @@ async function fetchOne(query, locKey, datePosted) {
 
 // ── Scan ──────────────────────────────────────────────────────────────────────
 async function runScan() {
+  rolloverMonth();
   const remaining = MONTHLY_BUDGET - apiCalls;
-  if (remaining <= 0) { showError('Monthly API budget exhausted.'); return; }
+  if (remaining <= 0) { showError('Monthly API budget exhausted (200 calls). Resets on the 1st.'); return; }
+  if (apiCalls >= MONTHLY_TARGET) {
+    if (!confirm(`You're into your ${MONTHLY_BUDGET-MONTHLY_TARGET}-call buffer (${apiCalls}/${MONTHLY_TARGET} target used). Scan anyway?`)) {
+      return;
+    }
+  }
   const btn = document.getElementById('scanBtn');
   btn.disabled = true; btn.textContent = '⟳ Scanning…';
   hideError();
@@ -1303,6 +1335,7 @@ async function runScan() {
   const isNycRemote  = locKey === 'nyc_remote';
 
   let queries = [];
+  let nextIdx = poolIdx;
   if (customQ) {
     queries = [{q:customQ, tier:0, cat:'Custom'}];
   } else {
@@ -1315,6 +1348,7 @@ async function runScan() {
       idx++;
       if (idx > poolIdx + POOL.length) break;
     }
+    nextIdx = idx;   // advance by distance actually walked, so the cursor covers the whole pool
   }
 
   const winLabel = !isSeeded ? 'Seed 30d' : jobs.length < 50 ? 'Live 7d' : 'Live 3d';
@@ -1341,7 +1375,7 @@ async function runScan() {
     }
     if (allRaw.length === 0 && failCount > 0) throw new Error('All queries timed out — check connection');
 
-    if (!customQ) poolIdx = (poolIdx + queries.length) % POOL.length;
+    if (!customQ) poolIdx = nextIdx % POOL.length;
 
     let newCount = 0;
     const now = Date.now();
@@ -1553,9 +1587,16 @@ function updateStats() {
   document.getElementById('statDirect').textContent   = jobs.filter(j=>j.src?.isDirect).length;
   document.getElementById('statCalls').textContent    = apiCalls;
   document.getElementById('vt-discovery-n').textContent = jobs.filter(j=>!statuses[j.id]).length;
-  const pct = Math.round((apiCalls/MONTHLY_BUDGET)*100);
-  document.getElementById('budgetTxt').textContent    = `${apiCalls} / ${MONTHLY_BUDGET} calls`;
-  document.getElementById('budgetFill').style.width   = pct+'%';
+  const overTarget = apiCalls > MONTHLY_TARGET;
+  const pct = Math.min(100, Math.round((apiCalls/MONTHLY_TARGET)*100));
+  document.getElementById('budgetTxt').textContent    = `${apiCalls} / ${MONTHLY_TARGET} calls${overTarget?' · in buffer':''}`;
+  const fill = document.getElementById('budgetFill');
+  fill.style.width = pct+'%';
+  fill.style.background = overTarget ? 'var(--terra)' : 'var(--gold)';
+  const spend = briefsThisMonth * BRIEF_COST_USD;
+  const spendEl = document.getElementById('aiSpend');
+  spendEl.textContent = `~$${spend.toFixed(2)}`;
+  spendEl.style.color = spend > AI_TARGET_USD ? 'var(--gold-mid)' : 'var(--sage)';
   document.getElementById('burstN').textContent       = burstN;
 }
 
@@ -1595,7 +1636,20 @@ function scheduleNext() {
   document.getElementById('nextLabel').textContent='Next: '+next.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
 }
 
-function adjBurst(d){burstN=Math.max(1,Math.min(5,burstN+d));document.getElementById('burstN').textContent=burstN;save();}
+function adjBurst(d){burstN=Math.max(1,Math.min(10,burstN+d));document.getElementById('burstN').textContent=burstN;save();}
+
+// Budget pacing — spread MONTHLY_TARGET across the month at ~3 pulses/week, no scheduler.
+function pulsesLeftThisMonth(){
+  const now=new Date();
+  const lastDay=new Date(now.getFullYear(),now.getMonth()+1,0).getDate();
+  const daysLeft=(lastDay-now.getDate())+1;
+  return Math.max(1,Math.round(daysLeft/7*3));
+}
+function recommendedBurst(){
+  const remTarget=Math.max(0,MONTHLY_TARGET-apiCalls);
+  const perQuery=(document.getElementById('locationFilter')?.value==='nyc_remote')?2:1;
+  return Math.max(1,Math.min(10,Math.round((remTarget/pulsesLeftThisMonth())/perQuery)));
+}
 
 function setTab(t){activeTab=t;document.querySelectorAll('.tab').forEach(el=>el.classList.remove('on'));document.getElementById('tab-'+t).classList.add('on');render();}
 function setSort(s){activeSort=s;document.querySelectorAll('.sort-btn').forEach(b=>b.classList.remove('on'));document.getElementById('sort-'+s).classList.add('on');render();}
@@ -1841,7 +1895,7 @@ async function logOutreach() {
         body: JSON.stringify({ title: role||company, company, description: jd, score,
                                isDirect:false, source: source||'Recruiter outreach', hiddenGem:false, minSal:0, maxSal:0 })
       });
-      if (r.ok) { payload.brief = await r.json(); payload.score = score; briefData[payload.outreach_id] = payload.brief; }
+      if (r.ok) { payload.brief = await r.json(); payload.score = score; briefData[payload.outreach_id] = payload.brief; rolloverMonth(); briefsThisMonth++; }
     } catch(e) { /* brief is best-effort; still log the outreach */ }
     btn.disabled = false; btn.textContent = '⚡ Log & generate brief';
   }
@@ -1922,13 +1976,23 @@ function closeRetroModal() {
   } catch(e) {}
 
   await load();
+  rolloverMonth();
+  // Migrate any legacy comp band (the old $250K ceiling predates the stated $220K max)
+  // to the stated range: floor $120K, target $165K (center of the 150–180 win band),
+  // ceiling $220K. Fires once; after migration ceiling is 220000 so it won't re-run,
+  // leaving later hand-tuned values alone.
+  if (comp.ceiling === 250000) {
+    comp = {floor:120000, target:165000, ceiling:220000};
+  }
+  burstN = recommendedBurst();   // pace toward the 185 monthly target
   document.getElementById('compFloor').value   = comp.floor;
   document.getElementById('compTarget').value  = comp.target;
   document.getElementById('compCeiling').value = comp.ceiling;
   document.getElementById('po_date').value = new Date().toISOString().slice(0,10);
   updateStats(); updateModePill(); renderQueue(); renderQuick(); render();
   document.getElementById('rotatingQ').textContent = POOL[poolIdx % POOL.length].q;
-  setView('pipeline');   // outreach-first home
+  setView('discovery');   // discovery-first home
+  await save();
 })();
 </script>
 </body>
