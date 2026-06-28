@@ -254,39 +254,25 @@ SailPoint identity governance, SSO/OIDC awareness, Cisco Meraki network monitori
 
 ## 8. AI Brief Generation Instructions
 
-### On Strong Match (Fit score: high across Dimensions 1–4)
-1. Open with trajectory classification and one-sentence rationale
-2. Lead with the strongest dimension match — identify which dimension the JD weights most heavily and anchor there
-3. Surface the single highest-leverage positioning angle — what makes this candidate unusual relative to a standard PM applicant
-4. Draft 3 tailored talking points grounded in specific achievements from this profile — no generic PM language
-5. Generate 2–3 candidate-directed interview questions to assess whether the role is actually right (scope, authority, visibility, growth path)
-6. Close with a one-sentence Fit note on trajectory alignment
+> **Canonical source: `server.js` `/brief` endpoint prompt (updated 2026-06-27)**
+> The live brief generation logic — output schema, field definitions, assessment
+> instructions, assumption handling, reasoning requirements, and bullet dimension
+> rules — is defined in the Claude prompt inside `server.js`. That file is the
+> single source of truth. Do not maintain parallel brief instructions here; they
+> will drift out of sync and produce conflicting behavior.
+>
+> This section retains only the rules that govern WHEN and WHETHER to generate a
+> brief (surfacing logic), not HOW to generate one (prompt logic).
 
-### On Partial Match (Fit score: moderate — strong in some dimensions, absent in others)
-1. Open with trajectory classification
-2. Name what's strong and why
-3. Name the gap explicitly — distinguish between: closeable in interview (framing gap), closeable in 6–12 months (credential or experience gap), or structural mismatch (role requires something this profile doesn't have and won't have soon)
-4. Draft 2 talking points for the strong dimensions
-5. Generate 1–2 candidate-directed questions targeting the gap dimensions to assess real requirements vs. JD boilerplate
-6. Close with a recommendation: pursue, pursue with caveat, or deprioritize
+### Hidden Gem Rule (surfacing trigger — governs brief eligibility, not brief content)
+**Resolved (2026-06-23):** No fixed employer watchlist. Elevated brief treatment is
+triggered by signal: any company in the 100–999 employee range that clears Fit Score ≥ 80
+qualifies as a "hidden gem" and receives a full brief even on a partial match.
+See Section 4, Company Size, for the full tier definition.
 
-### On Scope Compression (Title matches, scope is smaller than current)
-1. Flag immediately in brief header: "SCOPE COMPRESSION RISK"
-2. Note the specific delta — how many sites, what portfolio size, what visibility level
-3. Classify as Lateral or Regressive
-4. Only recommend pursuing if: compensation delta is significant, employer is on priority watchlist, or role offers a trajectory unlock not available at current scope
-
-### On Unscored Dimensions
-- Do not default unscored dimensions to neutral
-- Flag each unscored dimension in the brief as: "Unable to score from JD — recommend asking: [specific question]"
-
-### Hidden Gem Rule (replaces a named watchlist)
-**Resolved (2026-06-23):** No fixed employer watchlist — the candidate is explicitly open to
-any industry, company, or role that's a genuine fit, not a pre-selected short list. Elevated
-brief treatment (full brief, generated even on a partial match) is instead triggered by
-signal, not by name: any company in the 100–999 employee range that clears Fit Score ≥ 80
-qualifies as a "hidden gem" and receives the same elevated treatment a watchlist employer
-used to get. See Section 4, Company Size, for the full tier definition.
+### Unscored Dimension Protocol (surfacing rule)
+Do not default unscored dimensions to neutral in the scoring engine. Pass them to the
+brief endpoint as gaps — the prompt handles how to surface them to the user.
 
 ---
 

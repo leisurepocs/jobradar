@@ -172,7 +172,8 @@ function callClaude(prompt) {
     if (!ANTHROPIC_KEY) return reject(new Error('ANTHROPIC_API_KEY not configured'));
     const body = JSON.stringify({
       model: CLAUDE_MODEL,
-      max_tokens: 2200,
+      max_tokens: 3500,
+      system: 'Respond with raw JSON only. No markdown, no code fences, no explanation. Your entire response must be a valid JSON object starting with { and ending with }.',
       messages: [{ role: 'user', content: prompt }]
     });
     const options = {
@@ -343,7 +344,7 @@ ${(description || '').substring(0, 6000)}
 
 ASSESSMENT INSTRUCTIONS:
 
-1. DATA QUALITY: Before analysis, assess the JD's information density. A thin JD (under ~200 words, no scope/budget/team/reporting signals) cannot support a high-confidence brief — set data_quality to "low" and note what's missing.
+1. DATA QUALITY: Before analysis, assess the JD's information density. A thin JD (under ~200 words, no scope/budget/team/reporting signals) cannot support a high-confidence brief — set data_quality to "low" and note what's missing. Always return this field even when "high" — never omit it.
 
 2. TRAJECTORY: Classify vs. candidate's current scope AND target trajectory:
    - Accelerating: materially expands authority surface (budget, headcount, broader domain) or directly advances toward director-level
@@ -356,24 +357,29 @@ ASSESSMENT INSTRUCTIONS:
    - 6-12mo-closeable: a real gap but addressable on a near-term timeline
    - structural-mismatch: the role needs something this candidate doesn't have and won't have soon
 
-4. ALIGNMENT: Assess both fit AND misfit — what makes this candidate a strong match, AND what this JD emphasizes that is not strongly evidenced in the resume (not the same as the gap field — this is about JD signal weight vs. resume depth).
+4. ALIGNMENT: Write 2-3 sentences. Begin with what makes this candidate a strong match (cite specific resume evidence — named achievements, metrics, or tools, not general claims). The final sentence is mandatory and must name at least one thing this JD emphasizes or weights heavily that is not strongly evidenced in the resume. This is about JD signal weight vs. resume depth — distinct from the gap field, which covers closeability.
 
-5. BULLETS: Write exactly 3 tailored bullets, each covering a distinct dimension:
+5. BULLETS: Write exactly 3 bullets — no more, no fewer. Each covers a distinct dimension:
    - Bullet 1: governance/authority (executive QBR, CAB, vendor portfolio, SLA accountability)
    - Bullet 2: operational scope/impact (site scale, incident data, uptime, card reader modernization)
    - Bullet 3: platform/technical depth (ServiceHub, AI orchestration, API integrations)
-   Each bullet must bridge resume language + this JD's exact phrasing: pull verb/noun language directly from the resume prose; mirror the specific priority signals and phrasing from this JD. Do not write generic PM bullets.
+   Each bullet must bridge resume language + this JD's exact phrasing: pull verb/noun language directly from the resume prose; mirror the specific priority signals and phrasing from this JD. Do not write generic PM bullets. If you identify more than 3 relevant points, select the 3 that most differentiate this candidate for this specific role.
 
 6. ATS TIPS: Order by expected impact, highest first. Use exact keyword strings from this JD — not paraphrases.
+
+7. ASSUMPTIONS: Before writing the brief, note each critical assumption you accepted as given — JD scope claims taken at face value, company size inferred from name or JD text, reporting level assumed from title alone, salary range accepted as complete. For each, note what changes in the analysis if the assumption is wrong.
+
+8. REASONING: Name the 2-3 specific JD signals and resume data points that most drove your trajectory classification and recommendation. Be concrete — cite actual phrases, numbers, or role scope from both documents, not general claims like "strong fit."
 
 Return ONLY a raw JSON object (no markdown code fences) with this exact structure:
 {
   "data_quality": "high" | "medium" | "low",
   "data_quality_note": null or "1 sentence on what's missing that limits brief confidence",
+  "assumptions": ["each critical assumption accepted during analysis, plus impact if wrong — e.g. 'JD claims 50+ global sites — accepted as written; if actual scope is smaller, trajectory downgrades to Lateral'"],
   "trajectory": "Accelerating" | "Lateral" | "Regressive",
   "trajectory_note": "1 sentence rationale comparing this role's scope/authority to the candidate's current scope AND target trajectory",
   "scope_compression_risk": null or "1-2 sentences naming the specific delta (sites/portfolio size/visibility) if title outpaces actual scope",
-  "alignment": "2-3 sentences: what makes this candidate a strong fit, plus what the JD emphasizes that is not strongly evidenced in the resume",
+  "alignment": "2-3 sentences: specific resume evidence for fit (named achievements/metrics), PLUS mandatory final sentence naming what the JD weights heavily that is not strongly evidenced in the resume",
   "gap": "1-2 sentences on gaps or areas to explicitly address in the application",
   "gap_type": "interview-closeable" | "6-12mo-closeable" | "structural-mismatch" | null,
   "weaknesses": ["mandatory: 1-3 honest weaknesses — overclaim risk, tenure/title-progression risk, trajectory mismatch, scope concerns, or open gaps (budget ownership, direct reports) if JD requires them. Never return an empty array."],
@@ -388,6 +394,7 @@ Return ONLY a raw JSON object (no markdown code fences) with this exact structur
     "platform/technical depth bullet — bridges resume language + JD phrasing"
   ],
   "interview_questions": ["1-2 questions for the CANDIDATE to ask the INTERVIEWER to test whether this role's scope, authority, visibility, and growth path are actually real — not prep questions for the candidate's own answers"],
+  "reasoning": "2-3 sentences naming the specific JD signals and resume data points that drove trajectory and recommendation — cite actual phrases, numbers, or scope from both documents",
   "recommendation": "pursue" | "pursue_with_caveat" | "deprioritize",
   "recommendation_note": "1-2 sentences justifying the recommendation tier, referencing trajectory, gap_type, and salary fit if salary data is available",
   "ats_tips": ["3-5 ATS optimizations ordered by expected impact (highest first) — exact keyword strings from this JD, section heading recommendations, phrasing to mirror verbatim"]
