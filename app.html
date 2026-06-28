@@ -1032,10 +1032,11 @@ function renderBrief(jobId) {
     </div>
     <div class="brief-body">
       <div class="brief-section${curTab==='alignment'?' on':''}" data-sec="alignment">
+        ${d.data_quality && d.data_quality !== 'high' ? `<div class="brief-row"><div class="brief-text" style="font-size:10px;color:${d.data_quality==='low'?'var(--terra)':'var(--ink-3)'}">⚑ Brief confidence: ${esc(d.data_quality)}${d.data_quality_note ? ' — ' + esc(d.data_quality_note) : ''}</div></div>` : ''}
         ${d.trajectory?`<div class="brief-row"><div class="brief-label">Trajectory</div><div class="brief-text"><span class="score-ring small ${trajectoryClass}" style="display:inline-block;width:auto;height:auto;padding:2px 10px;border-radius:10px;font-size:11px">${esc(d.trajectory)}</span> ${esc(d.trajectory_note||'')}</div></div>`:''}
         ${d.scope_compression_risk?`<div class="brief-row"><div class="brief-label" style="color:var(--terra)">⚠ Scope Compression Risk</div><div class="brief-text">${esc(d.scope_compression_risk)}</div></div>`:''}
         <div class="brief-row"><div class="brief-label">Alignment</div><div class="brief-text">${esc(d.alignment)}</div></div>
-        <div class="brief-row"><div class="brief-label">Gap${d.gap_type?` (${esc(d.gap_type.replace('-',' '))})`:''}</div><div class="brief-text">${esc(d.gap)}</div></div>
+        <div class="brief-row"><div class="brief-label">Gap${d.gap_type?` (${esc(d.gap_type.replace(/-/g,' '))})`:''}</div><div class="brief-text">${esc(d.gap)}</div></div>
         ${unscored?`<div class="brief-row"><div class="brief-label">Unscored — recommend asking</div><ul class="flag-list">${unscored}</ul></div>`:''}
       </div>
       <div class="brief-section${curTab==='keywords'?' on':''}" data-sec="keywords">
@@ -1086,7 +1087,7 @@ async function toggleBrief(jobId) {
       const r = await fetch('/brief', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: job.title, company: job.company, description: job.desc, score: job.score, isDirect: job.src?.isDirect, source: job.src?.label, hiddenGem: job.hiddenGem })
+        body: JSON.stringify({ title: job.title, company: job.company, description: job.desc, score: job.score, isDirect: job.src?.isDirect, source: job.src?.label, hiddenGem: job.hiddenGem, minSal: job.minSal || 0, maxSal: job.maxSal || 0 })
       });
       if (r.ok) {
         briefData[jobId] = await r.json();
