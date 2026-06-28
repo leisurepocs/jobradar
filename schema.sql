@@ -28,3 +28,13 @@ CREATE INDEX IF NOT EXISTS idx_activity_log_event_type  ON activity_log (event_t
 --   status_changed       — client-side: job status updated (jobId, status)
 --   weekly_report_generated — /logs/weekly called
 --   error                — any server-side error: endpoint, message
+--
+--   recruiter_outreach   — client-side: recruiter contact logged. payload:
+--                          { outreach_id, company, role, jd, source, date }
+--   screen_result        — client-side: outcome of a logged outreach. payload:
+--                          { outreach_id, outcome: 'passed'|'ghosted'|'rejected', date, note? }
+--   interview_stage      — client-side: a stage beyond initial screen. payload:
+--                          { outreach_id, stage, outcome, date }
+--   comp_data            — client-side: compensation data point. payload:
+--                          { outreach_id?, company, offered, accepted, date }
+--   phase_retro_generated — /logs/retro called: { days, stats }

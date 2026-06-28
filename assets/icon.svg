@@ -1,0 +1,7 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <rect width="512" height="512" rx="100" fill="#141210"/>
+  <circle cx="256" cy="220" r="90" fill="none" stroke="#1C6443" stroke-width="28"/>
+  <circle cx="256" cy="220" r="30" fill="#1C6443"/>
+  <line x1="322" y1="286" x2="390" y2="370" stroke="#1C6443" stroke-width="28" stroke-linecap="round"/>
+  <text x="256" y="430" font-family="sans-serif" font-weight="800" font-size="72" fill="white" text-anchor="middle">RADAR</text>
+</svg>

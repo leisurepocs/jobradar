@@ -449,6 +449,14 @@ body { background: var(--bg); min-height: 100vh; }
       <button class="sort-btn"    id="sort-value"   onclick="setSort('value')">Value</button>
       <button class="sort-btn"    id="sort-blended" onclick="setSort('blended')">Blended</button>
       <button class="sort-btn"    id="sort-recent"  onclick="setSort('recent')">Recent</button>
+      <select class="comp-input" id="dateFilterSel" style="margin-left:10px;height:24px;font-size:10px;width:auto;padding:0 6px" onchange="setDateFilter(this.value)">
+        <option value="any">Any time</option>
+        <option value="today">Posted today</option>
+        <option value="3d">Last 3 days</option>
+        <option value="7d">Last 7 days</option>
+        <option value="8-30">8–30 days ago (missed)</option>
+        <option value="30+">30+ days ago</option>
+      </select>
       <span style="margin-left:auto;color:var(--ink-4);font-family:'JetBrains Mono',monospace;font-size:10px" id="resultsLbl"></span>
     </div>
 
@@ -526,7 +534,9 @@ body { background: var(--bg); min-height: 100vh; }
     </div>
 
     <div style="margin-top:auto;padding-top:14px;border-top:1px solid var(--border)">
-      <button class="export-btn" style="width:100%;height:34px;font-size:11px;display:flex;align-items:center;justify-content:center;gap:6px;" onclick="showWeeklyReport()">◎ Weekly Report</button>
+      <button class="export-btn" style="width:100%;height:34px;font-size:11px;display:flex;align-items:center;justify-content:center;gap:6px;" onclick="showOutreachTracker()">✉ Outreach Tracker</button>
+      <button class="export-btn" style="width:100%;height:34px;font-size:11px;display:flex;align-items:center;justify-content:center;gap:6px;margin-top:8px" onclick="showPhaseRetro()">◐ Phase Retro</button>
+      <button class="export-btn" style="width:100%;height:34px;font-size:11px;display:flex;align-items:center;justify-content:center;gap:6px;margin-top:8px" onclick="showWeeklyReport()">◎ Weekly Report</button>
     </div>
 
   </aside>
@@ -549,7 +559,60 @@ body { background: var(--bg); min-height: 100vh; }
   </div>
 </div>
 
+<div class="modal-overlay hidden" id="outreachModal" onclick="if(event.target===this)closeOutreachModal()">
+  <div class="modal-box">
+    <div class="modal-head">
+      <span class="modal-title">Outreach Tracker</span>
+      <button class="modal-close" onclick="closeOutreachModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="weekly-label" style="margin-bottom:6px">Log a recruiter outreach</div>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px">
+        <input class="search-input" id="outCompany" type="text" placeholder="Company" style="padding-left:12px"/>
+        <input class="search-input" id="outRole" type="text" placeholder="Role / title" style="padding-left:12px"/>
+        <input class="search-input" id="outSource" type="text" placeholder="Source (recruiter name, LinkedIn, etc.)" style="padding-left:12px"/>
+        <textarea class="search-input" id="outJD" placeholder="JD text or link (optional)" style="padding:10px 12px;height:60px;resize:vertical;font-family:inherit"></textarea>
+        <input class="search-input" id="outDate" type="date" style="padding-left:12px"/>
+        <button class="export-btn" style="height:34px" onclick="logOutreach()">+ Log Outreach</button>
+      </div>
+
+      <div id="outreachMetrics" class="weekly-stat-grid" style="margin-bottom:14px"></div>
+
+      <div class="weekly-label">Recent outreach</div>
+      <div id="outreachList" style="margin-top:8px;display:flex;flex-direction:column;gap:6px"></div>
+
+      <div class="weekly-label" style="margin-top:18px">Log compensation data point</div>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-top:6px">
+        <input class="search-input" id="compCompany" type="text" placeholder="Company" style="padding-left:12px"/>
+        <input class="search-input" id="compOffered" type="number" step="1000" placeholder="Offered base comp" style="padding-left:12px"/>
+        <label style="font-size:11px;color:var(--text-2);display:flex;align-items:center;gap:6px"><input type="checkbox" id="compAccepted"/> Accepted</label>
+        <button class="export-btn" style="height:34px" onclick="logCompData()">+ Log Comp</button>
+      </div>
+      <div id="compList" style="margin-top:10px;display:flex;flex-direction:column;gap:6px"></div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay hidden" id="retroModal" onclick="if(event.target===this)closeRetroModal()">
+  <div class="modal-box">
+    <div class="modal-head">
+      <span class="modal-title">Phase Retro</span>
+      <button class="modal-close" onclick="closeRetroModal()">×</button>
+    </div>
+    <div class="modal-body" id="retroModalBody">
+      <div class="modal-loading">Loading…</div>
+    </div>
+  </div>
+</div>
+
 <script>
+function esc(s) {
+  return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+function openJobUrl(btn) {
+  try { const p=new URL(btn.dataset.href||''); if(p.protocol==='https:'||p.protocol==='http:') window.open(p.href,'_blank'); } catch(e){}
+}
+
 const MONTHLY_BUDGET = 200;
 
 // ── Query pool ────────────────────────────────────────────────────────────────
@@ -659,49 +722,124 @@ function isFresh48(postedAt) {
   if (!postedAt) return false;
   return (Date.now() - new Date(postedAt).getTime()) < 48 * 3600000;
 }
+function postedDaysAgo(postedAt) {
+  if (!postedAt) return null;
+  return Math.floor((Date.now() - new Date(postedAt).getTime()) / 86400000);
+}
+function postedAgoLabel(postedAt) {
+  const d = postedDaysAgo(postedAt);
+  if (d == null) return '';
+  if (d <= 0) return 'Today';
+  if (d === 1) return '1d ago';
+  if (d < 7) return d+'d ago';
+  if (d < 30) return Math.floor(d/7)+'w ago';
+  return Math.floor(d/30)+'mo ago';
+}
 
-// ── FIT scoring (keyword/role match — no salary) ───────────────────────────────
+// ── FIT scoring — 9-Dimension Taxonomy (candidate-profile.md Section 6) ────────
+// Resolved [DEFINE_WITH_CODE] config (candidate-profile.md Sections 4/6/8, resolved 2026-06-23):
+//  - Comp floor: comp.floor (default $130,000) — below this, surfaced only if score >= HIDDEN_GEM_MIN
+//  - Company size: 1,000+ employees = no flag. 100-999 = surfaced only if score >= HIDDEN_GEM_MIN
+//    ("hidden gem"). Under 100 = flagged as scope-regression risk, not suppressed.
+//  - No named watchlist (user explicitly doesn't want one) — the hidden-gem score threshold
+//    below is what used to be watchlist-gated elevated brief treatment.
+//  - Dimension floor: Dimensions 1 & 2 (the non-negotiable anchors) each need >= DIM_FLOOR_HITS
+//    distinct JD keyword matches or the role is ineligible regardless of aggregate score.
+const HIDDEN_GEM_MIN = 80;
+const DIM_FLOOR_HITS = 2;
+
 const STAFFING_BL  = ['apex systems','teksystems','insight global','cognizant staffing','cybercoders','kforce','genesis10','wipro','infosys','hcl america','staffmark','adecco','randstad','manpower','robert half','vaco','modis','leidos staffing'];
-const TITLE_BL     = ['associate program','junior','entry level','intern','coordinator','analyst i','analyst ii'];
 const IRRELEVANT   = ['security guard','security officer','loss prevention','armed security','patrol officer','surveillance officer'];
-const BONUS_KW     = ['converged security','physical security','pacs','iot security','incident response','vendor governance','multi-site','sla','operational resilience','cyber physical','security program','nist','iso 27001','enterprise program','risk framework','grc','third party risk','servicenow grc','servicenow irm','servicenow spm','risk register','control library'];
+const SENIORITY_FLOOR_TITLES = ['coordinator','analyst','associate','specialist','junior','intern','entry level'];
+// Titles to Exclude — candidate-profile.md Section 4. Exact phrases, plus bare "project
+// manager" (vs. "program manager") unless qualified by a seniority marker.
+const EXCLUDE_TITLE_PHRASES = ['security analyst','soc manager','it program manager','security engineer','security architect'];
+function isExcludedTitle(title) {
+  if (EXCLUDE_TITLE_PHRASES.some(p => hasKw(title, p))) return true;
+  if (hasKw(title,'project manager') && !hasKw(title,'program manager') && !/senior|principal|director/.test(title)) return true;
+  return false;
+}
 
-const SCORE_CATS = [
-  {kws:['risk governance','risk management','grc','governance risk compliance','control framework','nist csf','iso 27001','soc 2','risk framework','servicenow grc','servicenow irm'], pts:22},
-  {kws:['compliance program','regulatory compliance','audit','security audit','compliance management','policy governance','security policy'], pts:22},
-  {kws:['enterprise risk','operational risk','technology risk','information risk','it risk','cyber risk','third party risk','vendor risk'], pts:22},
-  {kws:['converged security','physical security','cyber physical','pacs','physical access control'], pts:20},
-  {kws:['iot security','iot governance','smart building','facility security','site security','multi-site'], pts:20},
-  {kws:['program manager','program management','program director','enterprise program','portfolio management','program governance'], pts:18},
-  {kws:['executive','c-suite','ciso','board','stakeholder','executive reporting','senior leadership'], pts:18},
-  {kws:['security engineering','siem','soc','vulnerability','threat','zero trust','iam','access control'], pts:18},
-  {kws:['cloud','aws','azure','gcp','saas','vendor management','salesforce','servicenow','crowdstrike','palo alto'], pts:18},
+// Word-boundary match — plain .includes() let short tokens like 'soc' or 'sla' match inside
+// unrelated words (e.g. 'social', 'translate'), which was quietly inflating scores.
+function hasKw(text, kw) {
+  const esc = kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return new RegExp(`\\b${esc}\\b`).test(text);
+}
+
+// candidate-profile.md Section 5 — Hard Filters (Binary, applied before scoring).
+function requiresHighClearance(desc) {
+  return /\bts\/?sci\b|top secret[^.]{0,20}\bsci\b|\bsci\b[^.]{0,20}top secret/i.test(desc||'');
+}
+function requiresRelocationOutsideNYC(desc, location) {
+  const mentionsRelocation = /relocation required|must relocate|requires relocation/i.test(desc||'');
+  const isNYC = /new york|nyc|\bny\b/i.test(location||'');
+  return mentionsRelocation && !isNYC;
+}
+
+// candidate-profile.md Section 6 — the 9 dimensions, weighted (sum to 100). Dimensions 1 & 2
+// are the floor-rule anchors. Weight tiers: Highest=20, High=14, Medium=10, Lower=4.
+const DIMENSIONS = [
+  { id:1, name:'Security Program & Governance Leadership', weight:20, floor:true,
+    kws:['program governance','governance','executive reporting','security leadership','security strategy','security program','security operations','global security','enterprise security','multi-site ownership','multi-site','risk management','risk mitigation','sla accountability','cab','change governance','operational continuity','qbr','cross-functional leadership','strategic leadership'] },
+  { id:2, name:'Converged / Physical Security', weight:14, floor:true,
+    kws:['physical security','pacs','access control','converged security','iot','data center security','site commissioning','onguard','lenel','ambient.ai','low-voltage','rex system','video analytics'] },
+  { id:3, name:'Vendor Management & Portfolio Governance', weight:14,
+    kws:['vendor management','contract governance','sla','third-party risk','vendor portfolio','multi-vendor','vendor selection','rfp','procurement governance'] },
+  { id:4, name:'Stakeholder Management & Executive Communication', weight:14,
+    kws:['executive stakeholder','c-suite','cross-functional leadership','executive reporting','leadership communication','vp','board','ciso'] },
+  { id:5, name:'Incident & Service Operations', weight:10,
+    kws:['incident management','service operations','p0','p1','mttr','uptime','operational continuity','severity management','on-call governance'] },
+  { id:6, name:'AI Orchestration & Automation', weight:10,
+    kws:['ai','automation','ml','intelligent operations','workflow automation','platform development','orchestration','ai-assisted','generative ai'] },
+  { id:7, name:'Platform & Technical Program Fluency', weight:10,
+    kws:['technical program management','platform development','engineering partnership','api','infrastructure','cloud-adjacent','network infrastructure','data center operations'] },
+  { id:8, name:'Cyber Risk & GRC', weight:4,
+    kws:['grc','risk management','compliance','iso 27001','nist','audit','identity governance','regulatory framework'] },
+  { id:9, name:'Identity, Access & Network Infrastructure', weight:4,
+    kws:['identity governance','iam','access management','network infrastructure','zero trust','sailpoint','credential management'] },
 ];
+function dimensionHits(text, dim) { return dim.kws.filter(kw => hasKw(text, kw)).length; }
 
 function fitScore(job) {
   const text     = [job.job_title||'', job.employer_name||'', job.job_description||''].join(' ').toLowerCase();
   const title    = (job.job_title||'').toLowerCase();
   const employer = (job.employer_name||'').toLowerCase();
+  const desc     = job.job_description||'';
+  const location = job.job_city ? `${job.job_city}, ${job.job_state||''}` : (job.job_is_remote?'Remote':'');
+
+  for (const a of STAFFING_BL)            if (employer.includes(a))   return -40;
+  for (const kw of IRRELEVANT)            if (title.includes(kw))     return -50;
+  if (isExcludedTitle(title))                                          return -50;
+  for (const kw of SENIORITY_FLOOR_TITLES) if (hasKw(title, kw))      return -30;
+  if (requiresHighClearance(desc))                                     return -50;
+  if (requiresRelocationOutsideNYC(desc, location))                    return -50;
+
+  const dim1Hits = dimensionHits(text, DIMENSIONS[0]);
+  const dim2Hits = dimensionHits(text, DIMENSIONS[1]);
+  if (dim1Hits < DIM_FLOOR_HITS || dim2Hits < DIM_FLOOR_HITS) return -1;
+
   let score = 0;
+  for (const dim of DIMENSIONS) score += Math.min(dimensionHits(text, dim), 3) / 3 * dim.weight;
 
-  for (const a of STAFFING_BL)  { if (employer.includes(a)) return -40; }
-  for (const kw of IRRELEVANT)  { if (title.includes(kw))   return -50; }
-  for (const kw of TITLE_BL)    { if (title.includes(kw))   { score -= 30; break; } }
-
-  for (const cat of SCORE_CATS) { if (cat.kws.some(kw => text.includes(kw))) score += cat.pts; }
-  for (const kw of BONUS_KW)    { if (text.includes(kw)) score += 6; }
-
-  if (/senior|lead|principal|head of security/.test(title)) score += 10;
-  else if (/manager|program manager/.test(title) && /security|risk|grc|compliance/.test(title)) score += 6;
-
+  if (/senior|lead|principal|head of security|director/.test(title)) score += 5;
   const src = detectSource(job.job_apply_link || job.job_google_link || '');
-  if (src.isDirect) score += 8;
-  score += freshScore(job.job_posted_at_datetime_utc);
+  if (src.isDirect) score += 5;
+  score += freshScore(job.job_posted_at_datetime_utc) * 0.5;
+  score = Math.min(Math.max(Math.round(score), 0), 100);
 
-  return Math.min(Math.max(score, 0), 100);
+  const daysOld = postedDaysAgo(job.job_posted_at_datetime_utc);
+  if (daysOld != null && daysOld > 60 && score < HIDDEN_GEM_MIN) return -1;
+
+  const sizeTier = companySizeTier(desc);
+  if (sizeTier === 'small' && score < HIDDEN_GEM_MIN) return -1;
+
+  if (job.job_max_salary > 0 && job.job_max_salary < comp.floor && score < HIDDEN_GEM_MIN) return -1;
+
+  return score;
 }
 
-function matchLevel(s) { return s >= 60 ? 'strong' : s >= 35 ? 'partial' : 'low'; }
+function matchLevel(s) { return s >= 65 ? 'strong' : s >= 40 ? 'partial' : 'low'; }
 
 // ── VALUE scoring (comp-based, configurable, diminishing returns) ──────────────
 // floor→target: linear 20→70. target→ceiling: sqrt curve 70→100 (diminishing returns).
@@ -720,13 +858,24 @@ function valueScore(maxSal, floor, target, ceiling) {
   return 100;
 }
 
-function companySize(desc) {
+// candidate-profile.md Section 4 — Company Size. Resolved tiers: enterprise (1,000+, no
+// flag), small (100-999, surfaced only if score >= HIDDEN_GEM_MIN — "hidden gem"), micro
+// (<100, flagged as scope-regression risk, not suppressed), unknown (no signal in JD text).
+function companySizeTier(desc) {
   const d = (desc||'').toLowerCase();
-  if (/fortune 500|global enterprise|multinational|100,000/.test(d)) return 'Enterprise';
-  if (/mid-size|series [c-z]/.test(d)) return 'Mid-size';
-  if (/startup|series [ab]|seed/.test(d)) return 'Startup';
-  return null;
+  const m = d.match(/([\d,]{3,})\+?\s*employees/);
+  if (m) {
+    const n = parseInt(m[1].replace(/,/g,''), 10);
+    if (n >= 1000) return 'enterprise';
+    if (n >= 100)  return 'small';
+    return 'micro';
+  }
+  if (/fortune 500|fortune 1000|global enterprise|multinational corporation/.test(d)) return 'enterprise';
+  if (/\bstartup\b|series [ab]\b|\bseed\b/.test(d)) return 'micro';
+  if (/mid-size|series [c-z]\b|scaleup/.test(d)) return 'small';
+  return 'unknown';
 }
+const SIZE_LABEL = { enterprise:'Enterprise', small:'Small (100-999)', micro:'<100 staff', unknown:null };
 
 function fmtSal(min, max) {
   if (!min && !max) return null;
@@ -849,7 +998,7 @@ function renderBrief(jobId) {
   const job = jobs.find(j=>j.id===jobId); if(!job) return;
 
   if (briefLoading.has(jobId)) {
-    el.innerHTML = `<div class="brief-body" style="display:flex;align-items:center;padding:18px 16px;color:var(--ink-4);font-size:12px"><span class="brief-spinner">⟳</span> Generating with Gemini 1.5 Flash…</div>`;
+    el.innerHTML = `<div class="brief-body" style="display:flex;align-items:center;padding:18px 16px;color:var(--ink-4);font-size:12px"><span class="brief-spinner">⟳</span> Generating with Claude (Haiku 4.5)…</div>`;
     return;
   }
 
@@ -857,11 +1006,18 @@ function renderBrief(jobId) {
   const isAI = !!briefData[jobId];
   const curTab = activeBriefTab[jobId] || 'alignment';
 
-  const kwPresent = (d.keywords?.present || []).map(k=>`<span class="kw-chip present">${k}</span>`).join('');
-  const kwMissing = (d.keywords?.missing || []).map(k=>`<span class="kw-chip">${k}</span>`).join('');
-  const bullets   = (d.bullets || []).map(b=>`<li>${b}</li>`).join('');
-  const flags     = (d.flags || []).map(f=>`<li>${f}</li>`).join('');
-  const atsTips   = d.ats_tips || '';
+  const kwPresent = (d.keywords?.present || []).map(k=>`<span class="kw-chip present">${esc(k)}</span>`).join('');
+  const kwMissing = (d.keywords?.missing || []).map(k=>`<span class="kw-chip">${esc(k)}</span>`).join('');
+  const bullets   = (d.bullets || []).map(b=>`<li>${esc(b)}</li>`).join('');
+  const flags     = (d.flags || []).map(f=>`<li>${esc(f)}</li>`).join('');
+  const weaknesses = (d.weaknesses || []).map(w=>`<li>${esc(w)}</li>`).join('');
+  const unscored  = (d.unscored_dimensions || []).map(u=>`<li>${esc(u)}</li>`).join('');
+  const questions = (d.interview_questions || []).map(q=>`<li>${esc(q)}</li>`).join('');
+  const atsTipsArr = Array.isArray(d.ats_tips) ? d.ats_tips : (d.ats_tips ? [d.ats_tips] : []);
+  const atsTips   = atsTipsArr.map(t=>`<li>${esc(t)}</li>`).join('');
+  const trajectoryClass = {Accelerating:'ring-high', Lateral:'ring-mid', Regressive:'ring-low'}[d.trajectory] || '';
+  const recTierClass = {pursue:'ring-high', pursue_with_caveat:'ring-mid', deprioritize:'ring-low'}[d.recommendation] || '';
+  const recTierLabel = {pursue:'Pursue', pursue_with_caveat:'Pursue with caveat', deprioritize:'Deprioritize'}[d.recommendation] || d.recommendation;
 
   el.innerHTML = `
     <div class="brief-tabs">
@@ -869,14 +1025,18 @@ function renderBrief(jobId) {
       <div class="brief-tab${curTab==='keywords'?' on':''}" onclick="setBriefTab('${jobId}','keywords')">Keywords</div>
       <div class="brief-tab${curTab==='bullets'?' on':''}"  onclick="setBriefTab('${jobId}','bullets')">Resume Bullets</div>
       ${atsTips?`<div class="brief-tab${curTab==='ats'?' on':''}" onclick="setBriefTab('${jobId}','ats')">ATS Tips</div>`:''}
-      ${flags?`<div class="brief-tab${curTab==='flags'?' on':''}" onclick="setBriefTab('${jobId}','flags')">Flags</div>`:''}
+      ${(weaknesses||flags)?`<div class="brief-tab${curTab==='flags'?' on':''}" onclick="setBriefTab('${jobId}','flags')">Weaknesses</div>`:''}
+      ${questions?`<div class="brief-tab${curTab==='questions'?' on':''}" onclick="setBriefTab('${jobId}','questions')">Ask Them</div>`:''}
       <div class="brief-tab${curTab==='rec'?' on':''}" onclick="setBriefTab('${jobId}','rec')">Recommendation</div>
-      ${isAI?'<span style="margin-left:auto;font-size:9px;color:var(--sage);padding:0 8px;align-self:center;flex-shrink:0">✦ Gemini</span>':''}
+      ${isAI?'<span style="margin-left:auto;font-size:9px;color:var(--sage);padding:0 8px;align-self:center;flex-shrink:0">✦ Claude</span>':''}
     </div>
     <div class="brief-body">
       <div class="brief-section${curTab==='alignment'?' on':''}" data-sec="alignment">
-        <div class="brief-row"><div class="brief-label">Alignment</div><div class="brief-text">${d.alignment}</div></div>
-        <div class="brief-row"><div class="brief-label">Gap</div><div class="brief-text">${d.gap}</div></div>
+        ${d.trajectory?`<div class="brief-row"><div class="brief-label">Trajectory</div><div class="brief-text"><span class="score-ring small ${trajectoryClass}" style="display:inline-block;width:auto;height:auto;padding:2px 10px;border-radius:10px;font-size:11px">${esc(d.trajectory)}</span> ${esc(d.trajectory_note||'')}</div></div>`:''}
+        ${d.scope_compression_risk?`<div class="brief-row"><div class="brief-label" style="color:var(--terra)">⚠ Scope Compression Risk</div><div class="brief-text">${esc(d.scope_compression_risk)}</div></div>`:''}
+        <div class="brief-row"><div class="brief-label">Alignment</div><div class="brief-text">${esc(d.alignment)}</div></div>
+        <div class="brief-row"><div class="brief-label">Gap${d.gap_type?` (${esc(d.gap_type.replace('-',' '))})`:''}</div><div class="brief-text">${esc(d.gap)}</div></div>
+        ${unscored?`<div class="brief-row"><div class="brief-label">Unscored — recommend asking</div><ul class="flag-list">${unscored}</ul></div>`:''}
       </div>
       <div class="brief-section${curTab==='keywords'?' on':''}" data-sec="keywords">
         ${kwPresent?`<div class="brief-row"><div class="brief-label">Covered in JD</div><div class="kw-list">${kwPresent}</div></div>`:''}
@@ -889,15 +1049,20 @@ function renderBrief(jobId) {
       </div>
       ${atsTips?`<div class="brief-section${curTab==='ats'?' on':''}" data-sec="ats">
         <div class="brief-label" style="margin-bottom:8px">ATS Optimization</div>
-        <div class="ats-tips-box">${atsTips}</div>
+        <ul class="ats-tips-box">${atsTips}</ul>
       </div>`:''}
-      ${flags?`<div class="brief-section${curTab==='flags'?' on':''}" data-sec="flags">
-        <div class="brief-label" style="margin-bottom:8px">Watch out for</div>
-        <ul class="flag-list">${flags}</ul>
+      ${(weaknesses||flags)?`<div class="brief-section${curTab==='flags'?' on':''}" data-sec="flags">
+        <div class="brief-label" style="margin-bottom:8px">Weaknesses to be mindful of</div>
+        <ul class="flag-list">${weaknesses||flags}</ul>
+      </div>`:''}
+      ${questions?`<div class="brief-section${curTab==='questions'?' on':''}" data-sec="questions">
+        <div class="brief-label" style="margin-bottom:8px">Ask them — to test if this role is real</div>
+        <ul class="flag-list">${questions}</ul>
       </div>`:''}
       <div class="brief-section${curTab==='rec'?' on':''}" data-sec="rec">
         <div class="brief-label" style="margin-bottom:8px">Application recommendation</div>
-        <div class="rec-box">${d.recommendation}</div>
+        ${recTierClass ? `<div class="brief-text" style="margin-bottom:6px"><span class="score-ring small ${recTierClass}" style="display:inline-block;width:auto;height:auto;padding:2px 10px;border-radius:10px;font-size:11px">${recTierLabel}</span></div>` : ''}
+        <div class="rec-box">${esc(d.recommendation_note || d.recommendation || '')}</div>
       </div>
     </div>`;
 }
@@ -912,7 +1077,7 @@ async function toggleBrief(jobId) {
   briefOpen.add(jobId);
   if (!activeBriefTab[jobId]) activeBriefTab[jobId] = 'alignment';
   render();
-  if (geminiEnabled && !briefData[jobId] && !briefLoading.has(jobId)) {
+  if (claudeEnabled && !briefData[jobId] && !briefLoading.has(jobId)) {
     const job = jobs.find(j => j.id === jobId);
     if (!job) return;
     briefLoading.add(jobId);
@@ -921,7 +1086,7 @@ async function toggleBrief(jobId) {
       const r = await fetch('/brief', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: job.title, company: job.company, description: job.desc, score: job.score, isDirect: job.src?.isDirect, source: job.src?.label })
+        body: JSON.stringify({ title: job.title, company: job.company, description: job.desc, score: job.score, isDirect: job.src?.isDirect, source: job.src?.label, hiddenGem: job.hiddenGem })
       });
       if (r.ok) {
         briefData[jobId] = await r.json();
@@ -935,18 +1100,18 @@ async function toggleBrief(jobId) {
 
 // ── State ─────────────────────────────────────────────────────────────────────
 let jobs=[], statuses={}, seenIds=new Set(), apiCalls=0, poolIdx=0;
-let activeTab='all', activeSort='fit';
+let activeTab='all', activeSort='fit', dateFilter='any';
 let filters={remote:false, salary:true, direct:false};
 let activeBriefTab={}, briefOpen=new Set();
 let briefData={}, briefLoading=new Set();
-let geminiEnabled = false;
+let claudeEnabled = false;
 
 async function logClientEvent(type, payload = {}) {
   try { await fetch('/log', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({event_type:type, payload}) }); }
   catch(e) {}
 }
 let isSeeded=false, burstN=3;
-let comp = {floor:120000, target:175000, ceiling:250000};
+let comp = {floor:130000, target:175000, ceiling:250000};
 
 function snapshot() {
   return {
@@ -1050,21 +1215,25 @@ async function runScan() {
   showInfo(`${winLabel} · ${queries.length} quer${queries.length>1?'ies':'y'} · ${locKey}`);
 
   try {
-    let allRaw = [];
+    let allRaw = [], failCount = 0;
     for (const qObj of queries) {
       if (isNycRemote) {
-        const [nyc, rem] = await Promise.all([
+        apiCalls += 2;
+        const [nycR, remR] = await Promise.allSettled([
           fetchOne(qObj.q, 'nyc', datePosted),
           fetchOne(qObj.q, 'remote', datePosted)
         ]);
-        apiCalls += 2;
-        allRaw.push(...nyc, ...rem);
+        if (nycR.status === 'fulfilled') allRaw.push(...nycR.value); else failCount++;
+        if (remR.status === 'fulfilled') allRaw.push(...remR.value); else failCount++;
       } else {
-        const res = await fetchOne(qObj.q, locKey, datePosted);
         apiCalls += 1;
-        allRaw.push(...res);
+        try {
+          const res = await fetchOne(qObj.q, locKey, datePosted);
+          allRaw.push(...res);
+        } catch(e) { failCount++; }
       }
     }
+    if (allRaw.length === 0 && failCount > 0) throw new Error('All queries timed out — check connection');
 
     if (!customQ) poolIdx = (poolIdx + queries.length) % POOL.length;
 
@@ -1072,7 +1241,7 @@ async function runScan() {
     const now = Date.now();
 
     for (const j of allRaw) {
-      const id = j.job_id;
+      const id = (j.job_id || '').replace(/[^a-zA-Z0-9_-]/g, '');
       if (!id || seenIds.has(id)) continue;
       const fScore = fitScore(j);
       if (fScore < 0) continue;
@@ -1096,7 +1265,9 @@ async function runScan() {
         salary:fmtSal(j.job_min_salary,j.job_max_salary),
         minSal:j.job_min_salary||0, maxSal:j.job_max_salary||0,
         score:fScore, match:matchLevel(fScore),
-        size:companySize(j.job_description),
+        size:SIZE_LABEL[companySizeTier(j.job_description)],
+        sizeFlag:companySizeTier(j.job_description)==='micro',
+        hiddenGem:companySizeTier(j.job_description)==='small' && fScore>=HIDDEN_GEM_MIN,
         url, src,
         isContract,
         fresh:isFresh48(j.job_posted_at_datetime_utc),
@@ -1114,8 +1285,10 @@ async function runScan() {
     const strongNew = jobs.filter(j=>j.score>=60&&j.ts===now).length;
     const directNew = jobs.filter(j=>j.src?.isDirect&&j.ts===now).length;
     if (newCount > 0) {
+      const partialNote = failCount > 0 ? ` · ${failCount} quer${failCount>1?'ies':'y'} timed out` : '';
       showToast(`${newCount} new role${newCount>1?'s':''} surfaced`,
         [strongNew>0?`${strongNew} strong`:'', directNew>0?`${directNew} direct ATS`:''].filter(Boolean).join(' · ') || 'Check the feed');
+      if (failCount > 0) showInfo(`Partial scan · ${failCount} quer${failCount>1?'ies':'y'} timed out and will retry next scan`);
     } else {
       showInfo('Scan complete · No new roles since last scan');
     }
@@ -1132,7 +1305,7 @@ function getVisible() {
 
   if (activeTab==='strong')    list=list.filter(j=>j.match==='strong');
   else if (activeTab==='partial')   list=list.filter(j=>j.match==='partial');
-  else if (activeTab==='fresh')     list=list.filter(j=>j.fresh);
+  else if (activeTab==='fresh')     list=list.filter(j=>isFresh48(j.posted));
   else if (activeTab==='direct')    list=list.filter(j=>j.src?.isDirect);
   else if (activeTab==='new')       list=list.filter(j=>!statuses[j.id]);
   else if (activeTab==='pipeline')  list=list.filter(j=>statuses[j.id]==='saved');
@@ -1142,6 +1315,19 @@ function getVisible() {
   if (filters.salary) list=list.filter(j=>!j.maxSal||j.maxSal>=comp.floor);
   if (filters.direct) list=list.filter(j=>j.src?.isDirect);
 
+  if (dateFilter !== 'any') {
+    list = list.filter(j => {
+      const d = postedDaysAgo(j.posted);
+      if (d == null) return false;
+      if (dateFilter==='today') return d <= 0;
+      if (dateFilter==='3d')    return d <= 3;
+      if (dateFilter==='7d')    return d <= 7;
+      if (dateFilter==='8-30')  return d >= 8 && d <= 30;
+      if (dateFilter==='30+')   return d > 30;
+      return true;
+    });
+  }
+
   if (activeSort==='fit')      list.sort((a,b)=>b.score-a.score);
   else if (activeSort==='value') list.sort((a,b)=>(b.valueScore??-1)-(a.valueScore??-1));
   else if (activeSort==='blended') list.sort((a,b)=>{
@@ -1149,7 +1335,11 @@ function getVisible() {
     const bb = b.valueScore!=null ? (b.score+b.valueScore)/2 : b.score;
     return bb-ba;
   });
-  else if (activeSort==='recent') list.sort((a,b)=>b.ts-a.ts);
+  else if (activeSort==='recent') list.sort((a,b)=>{
+    const ta = a.posted ? new Date(a.posted).getTime() : a.ts;
+    const tb = b.posted ? new Date(b.posted).getTime() : b.ts;
+    return tb-ta;
+  });
 
   return list;
 }
@@ -1168,7 +1358,7 @@ function render() {
   document.getElementById('cnt-all').textContent      = all.length;
   document.getElementById('cnt-strong').textContent   = all.filter(j=>j.match==='strong').length;
   document.getElementById('cnt-partial').textContent  = all.filter(j=>j.match==='partial').length;
-  document.getElementById('cnt-fresh').textContent    = all.filter(j=>j.fresh).length;
+  document.getElementById('cnt-fresh').textContent    = all.filter(j=>isFresh48(j.posted)).length;
   document.getElementById('cnt-direct').textContent   = all.filter(j=>j.src?.isDirect).length;
   document.getElementById('cnt-new').textContent      = all.filter(j=>!statuses[j.id]).length;
   document.getElementById('cnt-pipeline').textContent = all.filter(j=>statuses[j.id]==='saved').length;
@@ -1178,7 +1368,10 @@ function render() {
 
   const c = document.getElementById('cardContainer');
   if (!visible.length) {
-    c.innerHTML = `<div class="empty"><div class="empty-mark">◎</div><h3>No roles match</h3><p>Adjust filters or run a scan</p></div>`;
+    const dateHint = dateFilter !== 'any' && jobs.length > 0
+      ? `<p>Your ${jobs.length} surfaced roles are outside this date range — try <strong>8–30 days ago</strong> or <strong>Any time</strong></p>`
+      : `<p>Adjust filters or run a scan</p>`;
+    c.innerHTML = `<div class="empty"><div class="empty-mark">◎</div><h3>No roles match</h3>${dateHint}</div>`;
     return;
   }
 
@@ -1197,6 +1390,9 @@ function render() {
     if (job.isContract)       tags.push(`<span class="tag tag-contract">Contract</span>`);
     if (job.salary)           tags.push(`<span class="tag tag-salary">${job.salary}</span>`);
     if (job.size)             tags.push(`<span class="tag tag-size">${job.size}</span>`);
+    if (job.hiddenGem)        tags.push(`<span class="tag tag-direct">💎 Hidden gem</span>`);
+    if (job.sizeFlag)         tags.push(`<span class="tag tag-low">⚠ &lt;100 staff</span>`);
+    if (job.posted)           tags.push(`<span class="tag tag-size">${postedAgoLabel(job.posted)}</span>`);
     if (job.tier)             tags.push(`<span class="tag tag-t${job.tier}">T${job.tier} ${tierName(job.tier)}</span>`);
 
     const status   = statuses[job.id]||'';
@@ -1208,12 +1404,12 @@ function render() {
     return `<div class="job-card ${mc}" id="card-${job.id}" style="animation-delay:${delay}ms">
       <div class="card-head">
         <div class="card-main">
-          <div class="card-title">${job.title}</div>
+          <div class="card-title">${esc(job.title)}</div>
           <div class="card-sub">
-            <span class="card-co">${job.company}</span>
+            <span class="card-co">${esc(job.company)}</span>
             <span class="card-dot">·</span>
-            <span>${job.location}</span>
-            ${job.src?`<span class="card-dot">·</span><span class="source-badge src-${job.src.isDirect?'direct':'linkedin'}">${job.src.label}</span>`:''}
+            <span>${esc(job.location)}</span>
+            ${job.src?`<span class="card-dot">·</span><span class="source-badge src-${job.src.isDirect?'direct':'linkedin'}">${esc(job.src.label)}</span>`:''}
           </div>
         </div>
         <div class="score-cluster">
@@ -1224,7 +1420,7 @@ function render() {
       <div class="card-tags">${tags.join('')}</div>
       <div class="card-foot">
         <button class="card-btn" onclick="toggleBrief('${job.id}')">${isOpen?'Hide brief':'Brief'}</button>
-        <button class="card-btn ${isDirectSrc?'direct-apply':'apply-btn'}" onclick="window.open('${job.url}','_blank')">${isDirectSrc?'⬡ Apply Direct':'Apply ↗'}</button>
+        <button class="card-btn ${isDirectSrc?'direct-apply':'apply-btn'}" data-href="${esc(job.url)}" onclick="openJobUrl(this)">${isDirectSrc?'⬡ Apply Direct':'Apply ↗'}</button>
         <select class="status-sel" onchange="setStatus('${job.id}',this.value)">
           <option value="" ${!status?'selected':''}>— Track —</option>
           <option value="saved"     ${status==='saved'?'selected':''}>Saved</option>
@@ -1296,6 +1492,7 @@ function adjBurst(d){burstN=Math.max(1,Math.min(5,burstN+d));document.getElement
 
 function setTab(t){activeTab=t;document.querySelectorAll('.tab').forEach(el=>el.classList.remove('on'));document.getElementById('tab-'+t).classList.add('on');render();}
 function setSort(s){activeSort=s;document.querySelectorAll('.sort-btn').forEach(b=>b.classList.remove('on'));document.getElementById('sort-'+s).classList.add('on');render();}
+function setDateFilter(v){dateFilter=v;render();}
 function toggleF(f){
   filters[f]=!filters[f];
   const btn=document.getElementById(f==='direct'?'directTgl':f+'Tgl');
@@ -1350,14 +1547,14 @@ async function showWeeklyReport() {
     </div>`;
 
     if (assessment) {
-      if (assessment.search_volume) html += `<div class="weekly-section" style="margin-top:16px"><div class="weekly-label">Activity</div><div style="font-size:12px;color:var(--text-2);line-height:1.6">${assessment.search_volume}</div></div>`;
-      if (assessment.highlights?.length) html += `<div class="weekly-section"><div class="weekly-label">Highlights</div><ul class="weekly-list">${assessment.highlights.map(h=>`<li>${h}</li>`).join('')}</ul></div>`;
-      if (assessment.recommendations?.length) html += `<div class="weekly-section"><div class="weekly-label">Recommendations</div><ul class="weekly-list">${assessment.recommendations.map(r=>`<li>${r}</li>`).join('')}</ul></div>`;
-      if (assessment.issues?.filter(Boolean).length) html += `<div class="weekly-section"><div class="weekly-label">Issues</div><ul class="weekly-list">${assessment.issues.filter(Boolean).map(i=>`<li>${i}</li>`).join('')}</ul></div>`;
-      if (assessment.technical_notes?.filter(Boolean).length) html += `<div class="weekly-section"><div class="weekly-label">Technical Notes</div><ul class="weekly-list">${assessment.technical_notes.filter(Boolean).map(n=>`<li>${n}</li>`).join('')}</ul></div>`;
-      html += `<div style="font-size:10px;color:var(--ink-4);text-align:right;margin-top:8px">✦ Assessed by Gemini 1.5 Flash</div>`;
+      if (assessment.search_volume) html += `<div class="weekly-section" style="margin-top:16px"><div class="weekly-label">Activity</div><div style="font-size:12px;color:var(--text-2);line-height:1.6">${esc(assessment.search_volume)}</div></div>`;
+      if (assessment.highlights?.length) html += `<div class="weekly-section"><div class="weekly-label">Highlights</div><ul class="weekly-list">${assessment.highlights.map(h=>`<li>${esc(h)}</li>`).join('')}</ul></div>`;
+      if (assessment.recommendations?.length) html += `<div class="weekly-section"><div class="weekly-label">Recommendations</div><ul class="weekly-list">${assessment.recommendations.map(r=>`<li>${esc(r)}</li>`).join('')}</ul></div>`;
+      if (assessment.issues?.filter(Boolean).length) html += `<div class="weekly-section"><div class="weekly-label">Issues</div><ul class="weekly-list">${assessment.issues.filter(Boolean).map(i=>`<li>${esc(i)}</li>`).join('')}</ul></div>`;
+      if (assessment.technical_notes?.filter(Boolean).length) html += `<div class="weekly-section"><div class="weekly-label">Technical Notes</div><ul class="weekly-list">${assessment.technical_notes.filter(Boolean).map(n=>`<li>${esc(n)}</li>`).join('')}</ul></div>`;
+      html += `<div style="font-size:10px;color:var(--ink-4);text-align:right;margin-top:8px">✦ Assessed by Claude (Haiku 4.5)</div>`;
     } else {
-      html += `<div style="font-size:12px;color:var(--text-3);margin-top:14px;line-height:1.6">${data.note || 'Set GEMINI_API_KEY for AI assessment.'}</div>`;
+      html += `<div style="font-size:12px;color:var(--text-3);margin-top:14px;line-height:1.6">${data.note || 'Set ANTHROPIC_API_KEY for AI assessment.'}</div>`;
     }
 
     if (errorCount > 0) html += `<div style="font-size:11px;color:var(--terra);margin-top:10px">${errorCount} error${errorCount>1?'s':''} logged this week — check server logs.</div>`;
@@ -1371,12 +1568,149 @@ function closeWeeklyModal() {
   document.getElementById('weeklyModal').classList.add('hidden');
 }
 
+// ── Outreach Tracker ────────────────────────────────────────────────────────
+function genOutreachId(){ return 'out_' + Date.now() + '_' + Math.random().toString(36).slice(2,7); }
+
+async function showOutreachTracker() {
+  document.getElementById('outreachModal').classList.remove('hidden');
+  document.getElementById('outDate').value = new Date().toISOString().slice(0,10);
+  await refreshOutreachData();
+}
+function closeOutreachModal() {
+  document.getElementById('outreachModal').classList.add('hidden');
+}
+
+async function refreshOutreachData() {
+  const metricsEl = document.getElementById('outreachMetrics');
+  const listEl = document.getElementById('outreachList');
+  const compEl = document.getElementById('compList');
+  metricsEl.innerHTML = '<div style="font-size:11px;color:var(--text-3)">Loading…</div>';
+  try {
+    const r = await fetch('/logs/metrics');
+    const data = await r.json();
+    if (data.error) throw new Error(data.error);
+
+    const rate = data.screen_pass_rate;
+    metricsEl.innerHTML = `
+      <div class="weekly-stat"><div class="weekly-stat-n">${data.outreach_total}</div><div class="weekly-stat-l">Outreach</div></div>
+      <div class="weekly-stat"><div class="weekly-stat-n">${rate==null?'—':rate+'%'}</div><div class="weekly-stat-l">Screen-pass rate</div></div>
+      <div class="weekly-stat"><div class="weekly-stat-n">${data.pending}</div><div class="weekly-stat-l">Pending</div></div>`;
+
+    listEl.innerHTML = (data.outreach_log||[]).slice(0,15).map(o=>{
+      const badge = o.outcome==='passed' ? '<span style="color:var(--sage)">Passed</span>'
+                  : o.outcome==='ghosted' ? '<span style="color:var(--text-3)">Ghosted</span>'
+                  : o.outcome==='rejected' ? '<span style="color:var(--terra)">Rejected</span>'
+                  : '<span style="color:var(--text-3)">Pending</span>';
+      const actions = o.outcome==='pending' ? `
+        <button class="card-btn" style="font-size:10px;padding:3px 8px" onclick="setScreenResult('${o.outreach_id}','passed')">Passed</button>
+        <button class="card-btn" style="font-size:10px;padding:3px 8px" onclick="setScreenResult('${o.outreach_id}','ghosted')">Ghosted</button>
+        <button class="card-btn" style="font-size:10px;padding:3px 8px" onclick="setScreenResult('${o.outreach_id}','rejected')">Rejected</button>` : '';
+      return `<div style="border:1px solid var(--border);border-radius:var(--r2);padding:8px 10px;font-size:11px">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <strong>${esc(o.company||'—')}</strong> ${badge}
+        </div>
+        <div style="color:var(--text-2);margin-top:2px">${esc(o.role||'')} ${o.source?'· '+esc(o.source):''} ${o.date?'· '+esc(o.date):''}</div>
+        <div style="margin-top:6px;display:flex;gap:6px">${actions}</div>
+      </div>`;
+    }).join('') || '<div style="font-size:11px;color:var(--text-3)">No outreach logged yet.</div>';
+
+    compEl.innerHTML = (data.comp_entries||[]).slice(0,10).map(c=>{
+      const delta = (typeof c.offered==='number') ? c.offered - comp.target : null;
+      const deltaStr = delta==null ? '' : (delta>=0?'+':'') + '$' + delta.toLocaleString() + ' vs target';
+      return `<div style="border:1px solid var(--border);border-radius:var(--r2);padding:8px 10px;font-size:11px">
+        <strong>${esc(c.company||'—')}</strong> — $${(c.offered||0).toLocaleString()} ${c.accepted?'(accepted)':''}
+        <div style="color:var(--text-2);margin-top:2px">${esc(deltaStr)}</div>
+      </div>`;
+    }).join('');
+  } catch (e) {
+    metricsEl.innerHTML = `<div style="font-size:11px;color:var(--terra)">Failed to load: ${e.message}</div>`;
+  }
+}
+
+async function logOutreach() {
+  const company = document.getElementById('outCompany').value.trim();
+  if (!company) { showError('Company is required to log outreach.'); return; }
+  const payload = {
+    outreach_id: genOutreachId(),
+    company,
+    role: document.getElementById('outRole').value.trim(),
+    source: document.getElementById('outSource').value.trim(),
+    jd: document.getElementById('outJD').value.trim(),
+    date: document.getElementById('outDate').value || new Date().toISOString().slice(0,10)
+  };
+  await logClientEvent('recruiter_outreach', payload);
+  document.getElementById('outCompany').value = '';
+  document.getElementById('outRole').value = '';
+  document.getElementById('outSource').value = '';
+  document.getElementById('outJD').value = '';
+  await refreshOutreachData();
+}
+
+async function setScreenResult(outreachId, outcome) {
+  await logClientEvent('screen_result', { outreach_id: outreachId, outcome, date: new Date().toISOString().slice(0,10) });
+  await refreshOutreachData();
+}
+
+async function logCompData() {
+  const company = document.getElementById('compCompany').value.trim();
+  const offered = parseInt(document.getElementById('compOffered').value);
+  if (!company || !offered) { showError('Company and offered comp are required.'); return; }
+  const payload = {
+    company,
+    offered,
+    accepted: document.getElementById('compAccepted').checked,
+    date: new Date().toISOString().slice(0,10)
+  };
+  await logClientEvent('comp_data', payload);
+  document.getElementById('compCompany').value = '';
+  document.getElementById('compOffered').value = '';
+  document.getElementById('compAccepted').checked = false;
+  await refreshOutreachData();
+}
+
+// ── Phase Retro ──────────────────────────────────────────────────────────────
+async function showPhaseRetro() {
+  document.getElementById('retroModal').classList.remove('hidden');
+  document.getElementById('retroModalBody').innerHTML = '<div class="modal-loading"><span class="brief-spinner">⟳</span> Generating phase retro…</div>';
+  try {
+    const r = await fetch('/logs/retro?days=7');
+    const data = await r.json();
+    if (data.error) throw new Error(data.error);
+    const { retro } = data;
+    if (!retro) {
+      document.getElementById('retroModalBody').innerHTML = `<div style="font-size:12px;color:var(--text-3);line-height:1.6">${data.note || 'Set ANTHROPIC_API_KEY for AI-generated retro.'}</div>`;
+      return;
+    }
+    const rate = data.screenPassRate;
+    let html = `<div class="weekly-stat-grid" style="margin-bottom:14px">
+      <div class="weekly-stat"><div class="weekly-stat-n">${rate==null?'—':rate+'%'}</div><div class="weekly-stat-l">Screen-pass rate</div></div>
+    </div>`;
+    const field = (label, val) => val ? `<div class="weekly-section"><div class="weekly-label">${label}</div><div style="font-size:12px;color:var(--text-2);line-height:1.6">${esc(val)}</div></div>` : '';
+    html += field('Who', retro.who);
+    html += field('What', retro.what);
+    html += field('When', retro.when);
+    html += field('Where', retro.where);
+    html += field('Why', retro.why);
+    html += field('How', retro.how);
+    html += field('Outcome (ROI)', retro.outcome_roi);
+    html += field('Retro — artifact', retro.retro_artifact);
+    html += field('Retro — approach', retro.retro_approach);
+    html += `<div style="font-size:10px;color:var(--ink-4);text-align:right;margin-top:8px">✦ Generated by Claude</div>`;
+    document.getElementById('retroModalBody').innerHTML = html;
+  } catch (e) {
+    document.getElementById('retroModalBody').innerHTML = `<div style="padding:20px;color:var(--terra);font-size:13px">Failed to load retro: ${e.message}</div>`;
+  }
+}
+function closeRetroModal() {
+  document.getElementById('retroModal').classList.add('hidden');
+}
+
 // ── Init ──────────────────────────────────────────────────────────────────────
 (async function init(){
   // Check server capabilities
   try {
     const h = await fetch('/health');
-    if (h.ok) { const d = await h.json(); geminiEnabled = !!d.gemini; }
+    if (h.ok) { const d = await h.json(); claudeEnabled = !!d.claude; }
   } catch(e) {}
 
   await load();

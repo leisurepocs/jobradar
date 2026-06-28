@@ -9,6 +9,9 @@
     "build": "electron-builder --mac",
     "build-dmg": "electron-builder --mac dmg"
   },
+  "dependencies": {
+    "dotenv": "^16.4.5"
+  },
   "devDependencies": {
     "electron": "^29.0.0",
     "electron-builder": "^24.0.0"
@@ -29,6 +32,9 @@
       "server.js",
       "app.html",
       "assets/**"
+    ],
+    "extraResources": [
+      { "from": ".env", "to": ".env" }
     ]
   }
 }
