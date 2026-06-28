@@ -15,7 +15,7 @@ const STATE_FILE   = path.join(__dirname, 'state.json');
 const SUPABASE_URL = (process.env.SUPABASE_URL || '').replace(/\/$/, '');
 const SUPABASE_KEY = process.env.SUPABASE_KEY || '';
 const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY || '';
-const CLAUDE_MODEL  = 'claude-haiku-4-5';
+const CLAUDE_MODEL  = 'claude-sonnet-4-6';
 
 // ── JSearch ───────────────────────────────────────────────────────────────────
 function jsearchFetch(params, retries = 1) {
@@ -344,78 +344,72 @@ ${(description || '').substring(0, 6000)}
 
 ASSESSMENT INSTRUCTIONS:
 
-1. DATA QUALITY: Before analysis, assess the JD's information density. A thin JD (under ~200 words, no scope/budget/team/reporting signals) cannot support a high-confidence brief — set data_quality to "low" and note what's missing. Always return this field even when "high" — never omit it.
+BREVITY RULE — applies to every field: Hard length limits are enforced. Never exceed them. Omit filler openers ("This indicates that", "It is worth noting that", "The candidate demonstrates"). Lead every sentence with the noun or claim. Cut, do not extend.
+
+1. DATA QUALITY: Assess JD information density before analysis. Thin JD (under ~200 words, no scope/budget/team/reporting signals) → data_quality "low". Always return this field even when "high".
 
 2. TRAJECTORY: Classify vs. candidate's current scope AND target trajectory:
-   - Accelerating: materially expands authority surface (budget, headcount, broader domain) or directly advances toward director-level
-   - Lateral: same scope/authority — improvement in title, comp, or employer brand without structural change
-   - Regressive: smaller operational scope, reduced visibility, or authority below current role
-   Do not let title alone drive classification. If title suggests seniority but actual site/portfolio scope or executive visibility is smaller than the candidate's 36-site, $1M+ footprint, classify as Lateral or Regressive and say so explicitly.
+   - Accelerating: materially expands authority surface or advances toward director-level
+   - Lateral: same scope/authority — title or brand improvement without structural change
+   - Regressive: smaller scope or reduced visibility vs. current 36-site, $1M+ role
+   Title alone does not drive classification. If scope signals are absent or smaller, classify Lateral or Regressive.
 
-3. GAP CLOSEABILITY: Classify any gap by:
-   - interview-closeable: a framing/communication gap, not a real capability gap
-   - 6-12mo-closeable: a real gap but addressable on a near-term timeline
-   - structural-mismatch: the role needs something this candidate doesn't have and won't have soon
+3. GAP CLOSEABILITY: interview-closeable (framing gap) | 6-12mo-closeable (real but near-term) | structural-mismatch (candidate doesn't have it and won't soon)
 
-4. ALIGNMENT: Write 2-3 sentences. Begin with what makes this candidate a strong match (cite specific resume evidence — named achievements, metrics, or tools, not general claims). The final sentence is mandatory and must name at least one thing this JD emphasizes or weights heavily that is not strongly evidenced in the resume. This is about JD signal weight vs. resume depth — distinct from the gap field, which covers closeability.
+4. ALIGNMENT: EXACTLY 2 sentences — no more. Sentence 1: strongest specific resume match (1 named achievement or metric). Sentence 2: one thing JD weights heavily that is absent from the resume.
 
-5. BULLETS: Write exactly 3 bullets — no more, no fewer. Each covers a distinct dimension:
-   - Bullet 1: governance/authority (executive QBR, CAB, vendor portfolio, SLA accountability)
-   - Bullet 2: operational scope/impact (site scale, incident data, uptime, card reader modernization)
-   - Bullet 3: platform/technical depth (ServiceHub, AI orchestration, API integrations)
-   Each bullet must bridge resume language + this JD's exact phrasing: pull verb/noun language directly from the resume prose; mirror the specific priority signals and phrasing from this JD. Do not write generic PM bullets. If you identify more than 3 relevant points, select the 3 that most differentiate this candidate for this specific role.
+5. BULLETS: Exactly 3, no more, no fewer. Each covers a distinct dimension:
+   - Bullet 1: governance/authority (QBR, CAB, vendor portfolio, SLA)
+   - Bullet 2: operational scope/impact (site scale, incident data, uptime)
+   - Bullet 3: platform/technical depth (ServiceHub, AI orchestration, integrations)
+   Pull verb/noun language from resume prose; mirror this JD's exact phrasing. No generic PM bullets.
 
-6. ATS TIPS: Order by expected impact, highest first. Use exact keyword strings from this JD — not paraphrases.
+6. ATS TIPS: Order by expected impact, highest first. Use exact JD keyword strings — not paraphrases. 1-2 sentences each; lead with the specific change to make.
 
-7. ASSUMPTIONS: Before writing the brief, note each critical assumption you accepted as given — JD scope claims taken at face value, company size inferred from name or JD text, reporting level assumed from title alone, salary range accepted as complete. For each, note what changes in the analysis if the assumption is wrong.
+7. ASSUMPTIONS: ≤20 words each: [claim accepted as given] — if wrong, [≤8-word consequence].
 
-8. REASONING: Name the 2-3 specific JD signals and resume data points that most drove your trajectory classification and recommendation. Be concrete — cite actual phrases, numbers, or role scope from both documents, not general claims like "strong fit."
+8. REASONING: 2 sentences only: (1) trajectory driver — cite specific JD signal + resume data point; (2) recommendation driver.
 
-9. SCORE CONFLICT: The rules-based fit score is a heuristic — it can diverge from the AI analysis. If the score is high (≥75) but trajectory is Lateral or Regressive, or score is low (<60) but trajectory is Accelerating, flag this conflict and explain which signal is more reliable for this specific role and why. Return null if score and trajectory are broadly consistent.
+9. SCORE CONFLICT: If score ≥75 but trajectory is Lateral/Regressive, or score <60 but trajectory is Accelerating — flag in ≤25 words: name the conflict, state which signal to trust. Return null if consistent.
 
-10. ANALYSIS CONFIDENCE: Rate your confidence in the conclusions using one of three tiers:
-    - Supported: multiple independent signals from JD + resume + source type agree and reinforce each other
-    - Provisional: reasonable given available information but depends on unverified JD claims (most briefs will be this)
-    - Speculative: thin JD, major conflicting signals, or trajectory depends on a single unverifiable claim
-    A rich JD does not make the role's claims verified — Provisional is the correct default for most briefs.
+10. ANALYSIS CONFIDENCE: Supported | Provisional | Speculative. Provisional is the correct default for most briefs — a rich JD does not make role claims verified.
 
-11. BIAS CALIBRATION: Identify 1-2 active bias risks specific to this brief. For each: name the bias, describe its direction in this analysis, and name the counterbias (the opposite overcorrection risk). Focus on: (a) whether JD marketing language is driving trajectory more than scope evidence, (b) whether title is anchoring classification above what scope supports, (c) whether this brief validates a likely-preexisting user interest rather than genuinely challenges it.
-    Format each entry as: "BiasName (direction): what it risks doing here — Counterbias: opposite overcorrection risk"
+11. BIAS CALIBRATION: 1-2 active bias risks. Format: "BiasName (direction): risk — Counterbias: opposite risk". 1 sentence each.
 
-12. SOURCE TRANSPARENCY: After completing the analysis, identify any significant claims in alignment, trajectory_note, reasoning, or recommendation_note that draw on your training knowledge about this company or industry rather than text explicitly present in the JD or resume. List each as: "In [field]: '[claim]' — training knowledge about [company/industry/role norms], not from JD or resume." Return null if all substantive claims derive only from the provided documents.
+12. SOURCE TRANSPARENCY: Claims in alignment/trajectory_note/reasoning/recommendation_note that draw on training knowledge, not JD or resume text. ≤15 words each: "In [field]: [claim] — training knowledge, not JD/resume". Return null if all claims come from provided documents.
 
 Return ONLY a raw JSON object (no markdown code fences) with this exact structure:
 {
   "data_quality": "high" | "medium" | "low",
-  "data_quality_note": null or "1 sentence on what's missing that limits brief confidence",
+  "data_quality_note": null or "≤15 words: what's missing",
   "analysis_confidence": "Supported" | "Provisional" | "Speculative",
-  "analysis_confidence_note": "1 sentence on what the confidence rating depends on, or what would change it",
-  "assumptions": ["each critical assumption accepted during analysis, plus impact if wrong — e.g. 'JD claims 50+ global sites — accepted as written; if actual scope is smaller, trajectory downgrades to Lateral'"],
-  "training_knowledge_flags": null or ["In [field]: '[claim]' — training knowledge about [topic], not from JD or resume"],
+  "analysis_confidence_note": "≤15 words: what this confidence rating depends on",
+  "assumptions": ["≤20 words each: [claim accepted] — if wrong, [consequence ≤8 words]"],
+  "training_knowledge_flags": null or ["≤15 words each: In [field]: [claim] — training knowledge, not JD/resume"],
   "trajectory": "Accelerating" | "Lateral" | "Regressive",
-  "trajectory_note": "1 sentence rationale comparing this role's scope/authority to the candidate's current scope AND target trajectory",
-  "score_conflict": null or "1-2 sentences on the conflict between the rules-based fit score and the AI trajectory/recommendation, and which signal to trust for this role",
-  "scope_compression_risk": null or "1-2 sentences naming the specific delta (sites/portfolio size/visibility) if title outpaces actual scope",
-  "alignment": "2-3 sentences: specific resume evidence for fit (named achievements/metrics), PLUS mandatory final sentence naming what the JD weights heavily that is not strongly evidenced in the resume",
-  "gap": "1-2 sentences on gaps or areas to explicitly address in the application",
+  "trajectory_note": "≤25 words: why this classification vs. candidate's 36-site, $1M+ current scope",
+  "score_conflict": null or "≤25 words: name conflict, state which signal to trust",
+  "scope_compression_risk": null or "≤20 words: name the specific scope delta",
+  "alignment": "EXACTLY 2 sentences: (1) strongest resume evidence with 1 metric; (2) what JD weights that is absent from resume",
+  "gap": "1 sentence, ≤30 words: name the gap and condition for closeability",
   "gap_type": "interview-closeable" | "6-12mo-closeable" | "structural-mismatch" | null,
-  "weaknesses": ["mandatory: 1-3 honest weaknesses — overclaim risk, tenure/title-progression risk, trajectory mismatch, scope concerns, or open gaps (budget ownership, direct reports) if JD requires them. Never return an empty array."],
-  "bias_flags": ["1-2 entries: 'BiasName (direction): what it risks doing in this brief — Counterbias: opposite overcorrection risk'"],
-  "unscored_dimensions": ["any JD requirement you cannot score from the text alone: 'Unable to score X from JD — recommend asking: [specific question]'"],
+  "weaknesses": ["1 sentence each, ≤25 words, direct — no hedging. 1-3 entries. Never empty."],
+  "bias_flags": ["1 sentence each: 'BiasName (direction): risk — Counterbias: risk'"],
+  "unscored_dimensions": ["≤20 words each: 'Unable to score [X] — ask: [question ≤12 words]'"],
   "keywords": {
-    "present": ["up to 8 JD keywords that match candidate confirmed background"],
-    "missing": ["up to 8 JD keywords NOT in candidate confirmed background"]
+    "present": ["up to 8 JD keywords matching candidate background"],
+    "missing": ["up to 8 JD keywords not in candidate background"]
   },
   "bullets": [
-    "governance/authority bullet — bridges resume language + JD phrasing",
-    "operational scope/impact bullet — bridges resume language + JD phrasing",
-    "platform/technical depth bullet — bridges resume language + JD phrasing"
+    "governance/authority bullet — bridge resume language + JD phrasing",
+    "operational scope/impact bullet — bridge resume language + JD phrasing",
+    "platform/technical depth bullet — bridge resume language + JD phrasing"
   ],
-  "interview_questions": ["1-2 questions for the CANDIDATE to ask the INTERVIEWER to test whether this role's scope, authority, visibility, and growth path are actually real — not prep questions for the candidate's own answers"],
-  "reasoning": "2-3 sentences naming the specific JD signals and resume data points that drove trajectory and recommendation — cite actual phrases, numbers, or scope from both documents",
+  "interview_questions": ["≤25 words each, 1-2 questions for CANDIDATE to ask INTERVIEWER — test scope/authority/growth path"],
+  "reasoning": "2 sentences: (1) trajectory driver with specific JD signal + resume data; (2) recommendation driver",
   "recommendation": "pursue" | "pursue_with_caveat" | "deprioritize",
-  "recommendation_note": "1-2 sentences justifying the recommendation tier, referencing trajectory, gap_type, and salary fit if salary data is available",
-  "ats_tips": ["3-5 ATS optimizations ordered by expected impact (highest first) — exact keyword strings from this JD, section heading recommendations, phrasing to mirror verbatim"]
+  "recommendation_note": "1 sentence, ≤35 words: trajectory tier + key caveat + salary fit if available",
+  "ats_tips": ["3-5 tips, 1-2 sentences each, ordered by impact — lead with the specific change, use exact JD phrasing"]
 }`;
 
       const text = await callClaude(prompt);
