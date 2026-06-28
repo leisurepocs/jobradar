@@ -1015,8 +1015,10 @@ function renderBrief(jobId) {
   const questions = (d.interview_questions || []).map(q=>`<li>${esc(q)}</li>`).join('');
   const atsTipsArr = Array.isArray(d.ats_tips) ? d.ats_tips : (d.ats_tips ? [d.ats_tips] : []);
   const atsTips    = atsTipsArr.map(t=>`<li>${esc(t)}</li>`).join('');
-  const assumptions = (d.assumptions || []).map(a=>`<li>${esc(a)}</li>`).join('');
+  const assumptions  = (d.assumptions || []).map(a=>`<li>${esc(a)}</li>`).join('');
+  const biasFlags    = (d.bias_flags || []).map(b=>`<li>${esc(b)}</li>`).join('');
   const trajectoryClass = {Accelerating:'ring-high', Lateral:'ring-mid', Regressive:'ring-low'}[d.trajectory] || '';
+  const confClass    = {Supported:'ring-high', Provisional:'ring-mid', Speculative:'ring-low'}[d.analysis_confidence] || '';
   const recTierClass = {pursue:'ring-high', pursue_with_caveat:'ring-mid', deprioritize:'ring-low'}[d.recommendation] || '';
   const recTierLabel = {pursue:'Pursue', pursue_with_caveat:'Pursue with caveat', deprioritize:'Deprioritize'}[d.recommendation] || d.recommendation;
 
@@ -1033,8 +1035,12 @@ function renderBrief(jobId) {
     </div>
     <div class="brief-body">
       <div class="brief-section${curTab==='alignment'?' on':''}" data-sec="alignment">
-        ${d.data_quality && d.data_quality !== 'high' ? `<div class="brief-row"><div class="brief-text" style="font-size:10px;color:${d.data_quality==='low'?'var(--terra)':'var(--ink-3)'}">⚑ Brief confidence: ${esc(d.data_quality)}${d.data_quality_note ? ' — ' + esc(d.data_quality_note) : ''}</div></div>` : ''}
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:${(d.data_quality && d.data_quality !== 'high') || d.analysis_confidence ? '8px' : '0'}">
+          ${d.analysis_confidence ? `<span class="score-ring small ${confClass}" style="display:inline-block;width:auto;height:auto;padding:2px 8px;border-radius:10px;font-size:10px" title="${esc(d.analysis_confidence_note||'')}">Analysis: ${esc(d.analysis_confidence)}</span>` : ''}
+          ${d.data_quality && d.data_quality !== 'high' ? `<span style="font-size:10px;color:${d.data_quality==='low'?'var(--terra)':'var(--ink-3)'};align-self:center">⚑ JD quality: ${esc(d.data_quality)}${d.data_quality_note ? ' — ' + esc(d.data_quality_note) : ''}</span>` : ''}
+        </div>
         ${d.trajectory?`<div class="brief-row"><div class="brief-label">Trajectory</div><div class="brief-text"><span class="score-ring small ${trajectoryClass}" style="display:inline-block;width:auto;height:auto;padding:2px 10px;border-radius:10px;font-size:11px">${esc(d.trajectory)}</span> ${esc(d.trajectory_note||'')}</div></div>`:''}
+        ${d.score_conflict?`<div class="brief-row"><div class="brief-label" style="color:var(--terra)">⚡ Score conflict</div><div class="brief-text">${esc(d.score_conflict)}</div></div>`:''}
         ${d.scope_compression_risk?`<div class="brief-row"><div class="brief-label" style="color:var(--terra)">⚠ Scope Compression Risk</div><div class="brief-text">${esc(d.scope_compression_risk)}</div></div>`:''}
         <div class="brief-row"><div class="brief-label">Alignment</div><div class="brief-text">${esc(d.alignment)}</div></div>
         <div class="brief-row"><div class="brief-label">Gap${d.gap_type?` (${esc(d.gap_type.replace(/-/g,' '))})`:''}</div><div class="brief-text">${esc(d.gap)}</div></div>
@@ -1054,9 +1060,9 @@ function renderBrief(jobId) {
         <div class="brief-label" style="margin-bottom:8px">ATS Optimization</div>
         <ul class="ats-tips-box">${atsTips}</ul>
       </div>`:''}
-      ${(weaknesses||flags)?`<div class="brief-section${curTab==='flags'?' on':''}" data-sec="flags">
-        <div class="brief-label" style="margin-bottom:8px">Weaknesses to be mindful of</div>
-        <ul class="flag-list">${weaknesses||flags}</ul>
+      ${(weaknesses||flags||biasFlags)?`<div class="brief-section${curTab==='flags'?' on':''}" data-sec="flags">
+        ${(weaknesses||flags)?`<div class="brief-label" style="margin-bottom:8px">Weaknesses to be mindful of</div><ul class="flag-list">${weaknesses||flags}</ul>`:''}
+        ${biasFlags?`<div class="brief-label" style="margin-bottom:8px;margin-top:${weaknesses||flags?'12px':'0'}">Bias calibration</div><ul class="flag-list" style="color:var(--ink-3)">${biasFlags}</ul>`:''}
       </div>`:''}
       ${questions?`<div class="brief-section${curTab==='questions'?' on':''}" data-sec="questions">
         <div class="brief-label" style="margin-bottom:8px">Ask them — to test if this role is real</div>
