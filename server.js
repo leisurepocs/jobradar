@@ -144,7 +144,7 @@ async function logEvent(eventType, payload = {}) {
   } catch (e) { /* logging must never crash the app */ }
 }
 
-// ── Claude (Haiku 4.5) ────────────────────────────────────────────────────────
+// ── Claude ───────────────────────────────────────────────────────────────────
 const RESUME_DEFAULT_PATH = path.join(__dirname, 'resume-reference.md');
 const RESUME_TPM_PATH     = path.join(__dirname, 'resume-reference-tpm.md');
 // No named watchlist — candidate-profile.md Section 8 (resolved 2026-06-23): elevated
@@ -650,7 +650,7 @@ server.listen(PORT, '127.0.0.1', () => {
   console.log('');
   console.log('  JobRadar running at  → http://localhost:' + PORT);
   console.log('  State backend        → ' + (SUPABASE_URL ? 'Supabase ✓' : 'local file (set SUPABASE_URL + SUPABASE_KEY to enable)'));
-  console.log('  AI briefs            → ' + (ANTHROPIC_KEY ? 'Claude (Haiku 4.5) ✓' : 'rule-based fallback (set ANTHROPIC_API_KEY to enable)'));
+  console.log('  AI briefs            → ' + (ANTHROPIC_KEY ? `Claude (${CLAUDE_MODEL}) ✓` : 'rule-based fallback (set ANTHROPIC_API_KEY to enable)'));
   console.log('  State file           → ' + STATE_FILE);
   console.log('');
 });
