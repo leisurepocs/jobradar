@@ -1017,17 +1017,22 @@ function renderBrief(jobId) {
   const atsTips    = atsTipsArr.map(t=>`<li>${esc(t)}</li>`).join('');
   const assumptions  = (d.assumptions || []).map(a=>`<li>${esc(a)}</li>`).join('');
   const biasFlags    = (d.bias_flags || []).map(b=>`<li>${esc(b)}</li>`).join('');
+  const trainingFlags = (d.training_knowledge_flags || []).map(t=>`<li>${esc(t)}</li>`).join('');
+  const dqLow        = d.data_quality === 'low';
+  const dqMed        = d.data_quality === 'medium';
+  const dqMark       = dqLow ? ' <span style="color:var(--terra);font-size:9px">⚑</span>' : '';
   const trajectoryClass = {Accelerating:'ring-high', Lateral:'ring-mid', Regressive:'ring-low'}[d.trajectory] || '';
   const confClass    = {Supported:'ring-high', Provisional:'ring-mid', Speculative:'ring-low'}[d.analysis_confidence] || '';
   const recTierClass = {pursue:'ring-high', pursue_with_caveat:'ring-mid', deprioritize:'ring-low'}[d.recommendation] || '';
   const recTierLabel = {pursue:'Pursue', pursue_with_caveat:'Pursue with caveat', deprioritize:'Deprioritize'}[d.recommendation] || d.recommendation;
 
   el.innerHTML = `
+    ${dqLow ? `<div style="background:var(--terra);color:white;font-size:10px;font-weight:600;padding:6px 14px;letter-spacing:0.3px">⚑ Thin JD — alignment, bullets, and ATS tips are speculative. Get more role detail before tailoring materials.</div>` : dqMed ? `<div style="font-size:10px;color:var(--ink-3);padding:5px 14px;border-bottom:1px solid var(--sand-3)">⚑ Limited JD — treat analysis as preliminary. Confirm role details before applying.</div>` : ''}
     <div class="brief-tabs">
-      <div class="brief-tab${curTab==='alignment'?' on':''}" onclick="setBriefTab('${jobId}','alignment')">Alignment</div>
+      <div class="brief-tab${curTab==='alignment'?' on':''}" onclick="setBriefTab('${jobId}','alignment')">Alignment${dqMark}</div>
       <div class="brief-tab${curTab==='keywords'?' on':''}" onclick="setBriefTab('${jobId}','keywords')">Keywords</div>
-      <div class="brief-tab${curTab==='bullets'?' on':''}"  onclick="setBriefTab('${jobId}','bullets')">Resume Bullets</div>
-      ${atsTips?`<div class="brief-tab${curTab==='ats'?' on':''}" onclick="setBriefTab('${jobId}','ats')">ATS Tips</div>`:''}
+      <div class="brief-tab${curTab==='bullets'?' on':''}"  onclick="setBriefTab('${jobId}','bullets')">Resume Bullets${dqMark}</div>
+      ${atsTips?`<div class="brief-tab${curTab==='ats'?' on':''}" onclick="setBriefTab('${jobId}','ats')">ATS Tips${dqMark}</div>`:''}
       ${(weaknesses||flags)?`<div class="brief-tab${curTab==='flags'?' on':''}" onclick="setBriefTab('${jobId}','flags')">Weaknesses</div>`:''}
       ${questions?`<div class="brief-tab${curTab==='questions'?' on':''}" onclick="setBriefTab('${jobId}','questions')">Ask Them</div>`:''}
       <div class="brief-tab${curTab==='rec'?' on':''}" onclick="setBriefTab('${jobId}','rec')">Recommendation</div>
@@ -1046,6 +1051,7 @@ function renderBrief(jobId) {
         <div class="brief-row"><div class="brief-label">Gap${d.gap_type?` (${esc(d.gap_type.replace(/-/g,' '))})`:''}</div><div class="brief-text">${esc(d.gap)}</div></div>
         ${unscored?`<div class="brief-row"><div class="brief-label">Unscored — recommend asking</div><ul class="flag-list">${unscored}</ul></div>`:''}
         ${assumptions?`<div class="brief-row"><div class="brief-label" style="color:var(--ink-3)">Assumptions accepted</div><ul class="flag-list" style="color:var(--ink-3)">${assumptions}</ul></div>`:''}
+        ${trainingFlags?`<div class="brief-row"><div class="brief-label" style="color:var(--ink-3)">Training knowledge used — verify independently</div><ul class="flag-list" style="color:var(--ink-3)">${trainingFlags}</ul></div>`:''}
       </div>
       <div class="brief-section${curTab==='keywords'?' on':''}" data-sec="keywords">
         ${kwPresent?`<div class="brief-row"><div class="brief-label">Covered in JD</div><div class="kw-list">${kwPresent}</div></div>`:''}

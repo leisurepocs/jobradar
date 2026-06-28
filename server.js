@@ -382,6 +382,8 @@ ASSESSMENT INSTRUCTIONS:
 11. BIAS CALIBRATION: Identify 1-2 active bias risks specific to this brief. For each: name the bias, describe its direction in this analysis, and name the counterbias (the opposite overcorrection risk). Focus on: (a) whether JD marketing language is driving trajectory more than scope evidence, (b) whether title is anchoring classification above what scope supports, (c) whether this brief validates a likely-preexisting user interest rather than genuinely challenges it.
     Format each entry as: "BiasName (direction): what it risks doing here — Counterbias: opposite overcorrection risk"
 
+12. SOURCE TRANSPARENCY: After completing the analysis, identify any significant claims in alignment, trajectory_note, reasoning, or recommendation_note that draw on your training knowledge about this company or industry rather than text explicitly present in the JD or resume. List each as: "In [field]: '[claim]' — training knowledge about [company/industry/role norms], not from JD or resume." Return null if all substantive claims derive only from the provided documents.
+
 Return ONLY a raw JSON object (no markdown code fences) with this exact structure:
 {
   "data_quality": "high" | "medium" | "low",
@@ -389,6 +391,7 @@ Return ONLY a raw JSON object (no markdown code fences) with this exact structur
   "analysis_confidence": "Supported" | "Provisional" | "Speculative",
   "analysis_confidence_note": "1 sentence on what the confidence rating depends on, or what would change it",
   "assumptions": ["each critical assumption accepted during analysis, plus impact if wrong — e.g. 'JD claims 50+ global sites — accepted as written; if actual scope is smaller, trajectory downgrades to Lateral'"],
+  "training_knowledge_flags": null or ["In [field]: '[claim]' — training knowledge about [topic], not from JD or resume"],
   "trajectory": "Accelerating" | "Lateral" | "Regressive",
   "trajectory_note": "1 sentence rationale comparing this role's scope/authority to the candidate's current scope AND target trajectory",
   "score_conflict": null or "1-2 sentences on the conflict between the rules-based fit score and the AI trajectory/recommendation, and which signal to trust for this role",
