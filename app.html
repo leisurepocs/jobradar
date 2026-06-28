@@ -344,6 +344,88 @@ body { background: var(--bg); min-height: 100vh; }
 @keyframes spin { to { transform: rotate(360deg); } }
 .brief-spinner { display:inline-block; animation:spin 0.8s linear infinite; margin-right:6px; }
 .ats-tips-box { background:var(--forest); color:var(--sand); border-radius:var(--r); padding:10px 12px; font-size:12px; line-height:1.65; }
+
+/* ══ VIEW SWITCH ══ */
+.view-switch { display:flex; gap:2px; background:rgba(0,0,0,0.18); padding:3px; border-radius:var(--r2); -webkit-app-region:no-drag; }
+.view-tab { font-family:'Outfit',sans-serif; font-weight:600; font-size:12px; color:var(--sage); padding:6px 16px; border-radius:7px; cursor:pointer; transition:background 0.15s, color 0.15s; white-space:nowrap; display:flex; align-items:center; gap:6px; }
+.view-tab:hover { color:var(--sand); }
+.view-tab.on { background:var(--terra); color:#fff; box-shadow:0 1px 4px rgba(196,113,74,0.4); }
+.view-tab .vt-n { font-family:'JetBrains Mono',monospace; font-size:10px; background:rgba(255,255,255,0.18); padding:0 5px; border-radius:6px; min-width:16px; text-align:center; }
+
+/* ══ PIPELINE VIEW ══ */
+#pipelineView { max-width:1000px; margin:0 auto; padding:28px 28px 60px; animation:fadeUp 0.35s ease; }
+@keyframes fadeUp { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
+.pipe-head { display:flex; align-items:baseline; justify-content:space-between; margin-bottom:18px; }
+.pipe-title { font-family:'Outfit',sans-serif; font-weight:700; font-size:22px; color:var(--ink); letter-spacing:-0.4px; }
+.pipe-title small { display:block; font-family:'Inter',sans-serif; font-weight:400; font-size:12px; color:var(--ink-3); letter-spacing:0; margin-top:3px; }
+
+/* scoreboard */
+.scoreboard { display:grid; grid-template-columns:1.3fr 1fr 1fr 1.2fr; gap:12px; margin-bottom:22px; }
+.score-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--r3); padding:16px 18px; box-shadow:var(--shadow-sm); position:relative; overflow:hidden; }
+.score-card.hero { background:linear-gradient(135deg, var(--forest), var(--forest-2)); border-color:var(--forest); }
+.score-card.hero .sc-n, .score-card.hero .sc-l { color:var(--sand); }
+.score-card.hero .sc-l { color:var(--sage); }
+.sc-n { font-family:'JetBrains Mono',monospace; font-size:30px; font-weight:500; color:var(--forest); line-height:1; }
+.sc-n small { font-size:15px; opacity:0.6; }
+.sc-l { font-size:9.5px; font-weight:600; color:var(--ink-3); text-transform:uppercase; letter-spacing:1.1px; margin-top:8px; }
+.sc-sub { font-size:10px; color:var(--ink-4); margin-top:5px; }
+.score-card.hero .sc-sub { color:var(--sage); }
+.sc-trend { font-size:11px; font-weight:600; }
+.sc-trend.up { color:#8FD4A8; } .sc-trend.flat { color:var(--ink-4); } .sc-trend.down { color:var(--rose); }
+
+/* composer */
+.composer { background:var(--surface); border:1px solid var(--border); border-radius:var(--r3); box-shadow:var(--shadow-sm); margin-bottom:22px; overflow:hidden; }
+.composer-trigger { display:flex; align-items:center; gap:10px; padding:15px 18px; cursor:pointer; font-family:'Outfit',sans-serif; font-weight:600; font-size:13px; color:var(--terra); transition:background 0.15s; }
+.composer-trigger:hover { background:var(--terra-light); }
+.composer-trigger .ct-plus { width:24px; height:24px; border-radius:50%; background:var(--terra); color:#fff; display:flex; align-items:center; justify-content:center; font-size:16px; flex-shrink:0; }
+.composer-body { padding:0 18px 18px; display:none; flex-direction:column; gap:9px; }
+.composer.open .composer-body { display:flex; }
+.composer.open .composer-trigger { border-bottom:1px solid var(--border); }
+.composer-row { display:flex; gap:9px; }
+.composer-row > * { flex:1; }
+.pi { width:100%; height:36px; border:1px solid var(--border); border-radius:var(--r); background:var(--bg); padding:0 12px; font-family:'Inter',sans-serif; font-size:12px; color:var(--text); transition:border-color 0.15s; }
+.pi:focus { outline:none; border-color:var(--terra-mid); }
+textarea.pi { height:74px; padding:10px 12px; resize:vertical; line-height:1.5; }
+.pi-submit { height:38px; background:var(--terra); color:#fff; border:none; border-radius:var(--r); font-family:'Outfit',sans-serif; font-weight:600; font-size:13px; cursor:pointer; transition:background 0.15s; display:flex; align-items:center; justify-content:center; gap:7px; }
+.pi-submit:hover { background:#B5623D; }
+.pi-submit:disabled { opacity:0.5; cursor:not-allowed; }
+
+/* outreach groups + cards */
+.pipe-group { margin-bottom:24px; }
+.pipe-group-head { display:flex; align-items:center; gap:8px; font-family:'Outfit',sans-serif; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:1.3px; color:var(--ink-3); margin-bottom:11px; }
+.pipe-group-head .pg-line { flex:1; height:1px; background:var(--border); }
+.pipe-group-head .pg-n { font-family:'JetBrains Mono',monospace; color:var(--ink-4); }
+.pipe-group.action .pipe-group-head { color:var(--terra); }
+.o-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--r2); padding:13px 16px; margin-bottom:9px; box-shadow:var(--shadow-sm); transition:box-shadow 0.15s, transform 0.1s; }
+.o-card:hover { box-shadow:var(--shadow-lg); }
+.o-card.action { border-left:3px solid var(--terra); }
+.o-card.flight { border-left:3px solid var(--forest-3); }
+.o-card.closed { opacity:0.72; }
+.o-top { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; }
+.o-co { font-family:'Outfit',sans-serif; font-weight:600; font-size:14px; color:var(--ink); }
+.o-role { font-size:12px; color:var(--text-2); margin-top:1px; }
+.o-meta { font-size:10.5px; color:var(--ink-4); margin-top:4px; display:flex; gap:7px; flex-wrap:wrap; align-items:center; }
+.o-meta .om-dot { color:var(--sand-4); }
+.o-badge { font-size:9.5px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; padding:3px 9px; border-radius:20px; white-space:nowrap; flex-shrink:0; }
+.o-badge.passed { background:var(--sage-light); color:var(--forest); }
+.o-badge.pending { background:var(--gold-light); color:var(--gold); }
+.o-badge.ghosted { background:var(--sand-2); color:var(--ink-3); }
+.o-badge.rejected { background:var(--rose-light); color:var(--terra); }
+.o-actions { display:flex; gap:7px; margin-top:11px; flex-wrap:wrap; align-items:center; }
+.o-btn { height:28px; padding:0 12px; border:1px solid var(--border); background:var(--bg); border-radius:var(--r); font-size:11px; font-weight:500; color:var(--text-2); cursor:pointer; transition:background 0.12s, border-color 0.12s; display:inline-flex; align-items:center; gap:5px; }
+.o-btn:hover { background:var(--surface-2); }
+.o-btn.brief { color:var(--forest); border-color:var(--sage); }
+.o-btn.brief:hover { background:var(--sage-light); }
+.o-btn.pass:hover { background:var(--sage-light); border-color:var(--sage); color:var(--forest); }
+.o-btn.ghost:hover { background:var(--sand-2); }
+.o-btn.reject:hover { background:var(--rose-light); border-color:var(--rose); color:var(--terra); }
+.o-briefchip { font-size:10px; color:var(--ink-4); display:inline-flex; align-items:center; gap:4px; }
+.o-briefchip.ready { color:var(--forest-3); }
+.pipe-empty { text-align:center; padding:30px 20px; color:var(--ink-4); font-size:12px; }
+
+/* comp logger strip */
+.comp-strip { background:var(--surface); border:1px solid var(--border); border-radius:var(--r3); padding:14px 18px; margin-top:8px; box-shadow:var(--shadow-sm); }
+.comp-strip-head { font-family:'Outfit',sans-serif; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:1.2px; color:var(--ink-3); margin-bottom:10px; }
 </style>
 </head>
 <body>
@@ -369,7 +451,12 @@ body { background: var(--bg); min-height: 100vh; }
     </div>
   </div>
 
-  <div class="stat-strip">
+  <div class="view-switch">
+    <div class="view-tab on" id="vt-pipeline" onclick="setView('pipeline')">◈ Pipeline <span class="vt-n" id="vt-pipeline-n">0</span></div>
+    <div class="view-tab" id="vt-discovery" onclick="setView('discovery')">⌖ Discovery <span class="vt-n" id="vt-discovery-n">0</span></div>
+  </div>
+
+  <div class="stat-strip" id="statStrip">
     <div class="stat-item"><span class="stat-n" id="statSurfaced">0</span><span class="stat-l">Surfaced</span></div>
     <div class="stat-item"><span class="stat-n hi" id="statStrong">0</span><span class="stat-l">Strong</span></div>
     <div class="stat-item"><span class="stat-n warn" id="statNew">0</span><span class="stat-l">New</span></div>
@@ -381,7 +468,7 @@ body { background: var(--bg); min-height: 100vh; }
   <button class="scan-btn" id="scanBtn" onclick="runScan()">▶ Scan Now</button>
 </header>
 
-<div class="intel-bar">
+<div class="intel-bar" id="intelBar">
   <div class="intel-item">
     <span id="budgetTxt">0 / 200 calls</span>
     <div class="budget-track"><div class="budget-fill" id="budgetFill" style="width:0%"></div></div>
@@ -395,7 +482,46 @@ body { background: var(--bg); min-height: 100vh; }
   <span class="intel-right" id="nextLabel">Next scan: —</span>
 </div>
 
-<div class="body">
+<section id="pipelineView">
+  <div class="pipe-head">
+    <div class="pipe-title">Outreach pipeline<small>Translate inbound JDs into your language at the moment a recruiter reaches out — and track what converts.</small></div>
+  </div>
+
+  <div class="scoreboard" id="scoreboard"></div>
+
+  <div class="composer" id="composer">
+    <div class="composer-trigger" onclick="toggleComposer()">
+      <span class="ct-plus">+</span> Log outreach — paste the recruiter message or JD
+    </div>
+    <div class="composer-body">
+      <div class="composer-row">
+        <input class="pi" id="po_company" type="text" placeholder="Company *"/>
+        <input class="pi" id="po_role" type="text" placeholder="Role / title"/>
+      </div>
+      <div class="composer-row">
+        <input class="pi" id="po_source" type="text" placeholder="Source (recruiter name, LinkedIn…)"/>
+        <input class="pi" id="po_date" type="date"/>
+      </div>
+      <textarea class="pi" id="po_jd" placeholder="Paste the JD or recruiter message here — generates a tailored translation brief on submit."></textarea>
+      <button class="pi-submit" id="po_submit" onclick="logOutreach()">⚡ Log &amp; generate brief</button>
+    </div>
+  </div>
+
+  <div id="pipeGroups"></div>
+
+  <div class="comp-strip">
+    <div class="comp-strip-head">Log a compensation data point</div>
+    <div class="composer-row" style="gap:9px">
+      <input class="pi" id="pc_company" type="text" placeholder="Company"/>
+      <input class="pi" id="pc_offered" type="number" step="1000" placeholder="Offered base"/>
+      <label style="font-size:11px;color:var(--text-2);display:flex;align-items:center;gap:6px;white-space:nowrap"><input type="checkbox" id="pc_accepted"/> Accepted</label>
+      <button class="pi-submit" style="flex:0 0 auto;padding:0 16px" onclick="logCompData()">+ Log comp</button>
+    </div>
+    <div id="pc_list" style="margin-top:11px;display:flex;flex-direction:column;gap:7px"></div>
+  </div>
+</section>
+
+<div class="body" id="discoveryView" style="display:none">
   <main class="feed">
 
     <div class="controls">
@@ -410,12 +536,6 @@ body { background: var(--bg); min-height: 100vh; }
         <option value="ct">Connecticut</option>
         <option value="national">National · remote-eligible</option>
         <option value="remote">Remote US only</option>
-        <option value="sf">San Francisco</option>
-        <option value="chicago">Chicago</option>
-        <option value="boston">Boston</option>
-        <option value="dc">Washington DC</option>
-        <option value="austin">Austin</option>
-        <option value="seattle">Seattle</option>
       </select>
       <div class="burst">
         <span class="burst-label">Burst</span>
@@ -534,7 +654,7 @@ body { background: var(--bg); min-height: 100vh; }
     </div>
 
     <div style="margin-top:auto;padding-top:14px;border-top:1px solid var(--border)">
-      <button class="export-btn" style="width:100%;height:34px;font-size:11px;display:flex;align-items:center;justify-content:center;gap:6px;" onclick="showOutreachTracker()">✉ Outreach Tracker</button>
+      <button class="export-btn" style="width:100%;height:34px;font-size:11px;display:flex;align-items:center;justify-content:center;gap:6px;" onclick="setView('pipeline')">✉ Outreach Pipeline</button>
       <button class="export-btn" style="width:100%;height:34px;font-size:11px;display:flex;align-items:center;justify-content:center;gap:6px;margin-top:8px" onclick="showPhaseRetro()">◐ Phase Retro</button>
       <button class="export-btn" style="width:100%;height:34px;font-size:11px;display:flex;align-items:center;justify-content:center;gap:6px;margin-top:8px" onclick="showWeeklyReport()">◎ Weekly Report</button>
     </div>
@@ -555,40 +675,6 @@ body { background: var(--bg); min-height: 100vh; }
     </div>
     <div class="modal-body" id="weeklyModalBody">
       <div class="modal-loading">Loading…</div>
-    </div>
-  </div>
-</div>
-
-<div class="modal-overlay hidden" id="outreachModal" onclick="if(event.target===this)closeOutreachModal()">
-  <div class="modal-box">
-    <div class="modal-head">
-      <span class="modal-title">Outreach Tracker</span>
-      <button class="modal-close" onclick="closeOutreachModal()">×</button>
-    </div>
-    <div class="modal-body">
-      <div class="weekly-label" style="margin-bottom:6px">Log a recruiter outreach</div>
-      <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px">
-        <input class="search-input" id="outCompany" type="text" placeholder="Company" style="padding-left:12px"/>
-        <input class="search-input" id="outRole" type="text" placeholder="Role / title" style="padding-left:12px"/>
-        <input class="search-input" id="outSource" type="text" placeholder="Source (recruiter name, LinkedIn, etc.)" style="padding-left:12px"/>
-        <textarea class="search-input" id="outJD" placeholder="JD text or link (optional)" style="padding:10px 12px;height:60px;resize:vertical;font-family:inherit"></textarea>
-        <input class="search-input" id="outDate" type="date" style="padding-left:12px"/>
-        <button class="export-btn" style="height:34px" onclick="logOutreach()">+ Log Outreach</button>
-      </div>
-
-      <div id="outreachMetrics" class="weekly-stat-grid" style="margin-bottom:14px"></div>
-
-      <div class="weekly-label">Recent outreach</div>
-      <div id="outreachList" style="margin-top:8px;display:flex;flex-direction:column;gap:6px"></div>
-
-      <div class="weekly-label" style="margin-top:18px">Log compensation data point</div>
-      <div style="display:flex;flex-direction:column;gap:8px;margin-top:6px">
-        <input class="search-input" id="compCompany" type="text" placeholder="Company" style="padding-left:12px"/>
-        <input class="search-input" id="compOffered" type="number" step="1000" placeholder="Offered base comp" style="padding-left:12px"/>
-        <label style="font-size:11px;color:var(--text-2);display:flex;align-items:center;gap:6px"><input type="checkbox" id="compAccepted"/> Accepted</label>
-        <button class="export-btn" style="height:34px" onclick="logCompData()">+ Log Comp</button>
-      </div>
-      <div id="compList" style="margin-top:10px;display:flex;flex-direction:column;gap:6px"></div>
     </div>
   </div>
 </div>
@@ -665,6 +751,12 @@ const QUERIES = [
 const POOL = [];
 for (const q of QUERIES) for (let i = 0; i < q.w; i++) POOL.push(q);
 
+// Regions are scoped to the candidate's actual eligibility (candidate-profile.md §5:
+// relocation outside the NYC metro is a hard disqualifier). Single-city onsite markets
+// (SF/Chicago/Boston/DC/Austin/Seattle) were removed 2026-06-28 — most of those JDs don't
+// literally say "relocation required", so they slipped past the hard filter and burned
+// API budget on non-actionable roles. National (remote-eligible) still covers nationwide
+// market-rate calibration without surfacing onsite roles he can't take.
 const LOC_MAP = {
   nyc_remote: {suffix:'New York', remote:false, noLoc:false},
   nyc:        {suffix:'New York', remote:false, noLoc:false},
@@ -672,12 +764,6 @@ const LOC_MAP = {
   ct:         {suffix:'Connecticut', remote:false, noLoc:false},
   national:   {suffix:'', remote:true, noLoc:true},
   remote:     {suffix:'', remote:true, noLoc:false},
-  sf:         {suffix:'San Francisco', remote:false, noLoc:false},
-  chicago:    {suffix:'Chicago', remote:false, noLoc:false},
-  boston:     {suffix:'Boston', remote:false, noLoc:false},
-  dc:         {suffix:'Washington DC', remote:false, noLoc:false},
-  austin:     {suffix:'Austin', remote:false, noLoc:false},
-  seattle:    {suffix:'Seattle', remote:false, noLoc:false},
 };
 
 const QUICK_MAP = {
@@ -995,14 +1081,15 @@ function computeBrief(job) {
 
 function renderBrief(jobId) {
   const el = document.getElementById('brief-'+jobId); if(!el) return;
-  const job = jobs.find(j=>j.id===jobId); if(!job) return;
+  const job = jobs.find(j=>j.id===jobId);
 
   if (briefLoading.has(jobId)) {
-    el.innerHTML = `<div class="brief-body" style="display:flex;align-items:center;padding:18px 16px;color:var(--ink-4);font-size:12px"><span class="brief-spinner">⟳</span> Generating with Claude (Haiku 4.5)…</div>`;
+    el.innerHTML = `<div class="brief-body" style="display:flex;align-items:center;padding:18px 16px;color:var(--ink-4);font-size:12px"><span class="brief-spinner">⟳</span> Generating with Claude…</div>`;
     return;
   }
 
-  const d = briefData[jobId] || computeBrief(job);
+  const d = briefData[jobId] || (job ? computeBrief(job) : null);
+  if (!d) { el.innerHTML = `<div class="brief-body" style="padding:16px;color:var(--ink-4);font-size:12px">No brief available.</div>`; return; }
   const isAI = !!briefData[jobId];
   const curTab = activeBriefTab[jobId] || 'alignment';
 
@@ -1121,6 +1208,9 @@ let filters={remote:false, salary:true, direct:false};
 let activeBriefTab={}, briefOpen=new Set();
 let briefData={}, briefLoading=new Set();
 let claudeEnabled = false;
+let currentView='pipeline';
+let outreachBriefOpen=new Set();
+let pipelineData=null;
 
 async function logClientEvent(type, payload = {}) {
   try { await fetch('/log', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({event_type:type, payload}) }); }
@@ -1462,6 +1552,7 @@ function updateStats() {
   document.getElementById('statPipeline').textContent = Object.values(statuses).filter(s=>['saved','applied','interview'].includes(s)).length;
   document.getElementById('statDirect').textContent   = jobs.filter(j=>j.src?.isDirect).length;
   document.getElementById('statCalls').textContent    = apiCalls;
+  document.getElementById('vt-discovery-n').textContent = jobs.filter(j=>!statuses[j.id]).length;
   const pct = Math.round((apiCalls/MONTHLY_BUDGET)*100);
   document.getElementById('budgetTxt').textContent    = `${apiCalls} / ${MONTHLY_BUDGET} calls`;
   document.getElementById('budgetFill').style.width   = pct+'%';
@@ -1587,101 +1678,202 @@ function closeWeeklyModal() {
 // ── Outreach Tracker ────────────────────────────────────────────────────────
 function genOutreachId(){ return 'out_' + Date.now() + '_' + Math.random().toString(36).slice(2,7); }
 
-async function showOutreachTracker() {
-  document.getElementById('outreachModal').classList.remove('hidden');
-  document.getElementById('outDate').value = new Date().toISOString().slice(0,10);
-  await refreshOutreachData();
-}
-function closeOutreachModal() {
-  document.getElementById('outreachModal').classList.add('hidden');
+// ── View switching ────────────────────────────────────────────────────────────
+function setView(v) {
+  currentView = v;
+  const pipe = v === 'pipeline';
+  document.getElementById('pipelineView').style.display = pipe ? '' : 'none';
+  document.getElementById('discoveryView').style.display = pipe ? 'none' : 'flex';
+  document.getElementById('intelBar').style.display = pipe ? 'none' : 'flex';
+  document.getElementById('statStrip').style.display = pipe ? 'none' : 'flex';
+  document.getElementById('scanBtn').style.display = pipe ? 'none' : 'flex';
+  document.getElementById('vt-pipeline').classList.toggle('on', pipe);
+  document.getElementById('vt-discovery').classList.toggle('on', !pipe);
+  if (pipe) renderPipeline();
 }
 
-async function refreshOutreachData() {
-  const metricsEl = document.getElementById('outreachMetrics');
-  const listEl = document.getElementById('outreachList');
-  const compEl = document.getElementById('compList');
-  metricsEl.innerHTML = '<div style="font-size:11px;color:var(--text-3)">Loading…</div>';
+function toggleComposer() {
+  document.getElementById('composer').classList.toggle('open');
+}
+
+function fmtDelta(n) {
+  if (n == null) return '—';
+  return (n >= 0 ? '+$' : '−$') + Math.abs(n).toLocaleString();
+}
+
+async function renderPipeline() {
+  const sb = document.getElementById('scoreboard');
+  const groups = document.getElementById('pipeGroups');
+  const compList = document.getElementById('pc_list');
+  if (!pipelineData) {
+    sb.innerHTML = `<div class="pipe-empty" style="grid-column:1/-1">Loading funnel…</div>`;
+  }
   try {
     const r = await fetch('/logs/metrics');
     const data = await r.json();
     if (data.error) throw new Error(data.error);
+    pipelineData = data;
+
+    // hydrate cached briefs from the outreach payloads
+    for (const o of (data.outreach_log||[])) {
+      if (o.brief && o.outreach_id) briefData[o.outreach_id] = o.brief;
+    }
 
     const rate = data.screen_pass_rate;
-    metricsEl.innerHTML = `
-      <div class="weekly-stat"><div class="weekly-stat-n">${data.outreach_total}</div><div class="weekly-stat-l">Outreach</div></div>
-      <div class="weekly-stat"><div class="weekly-stat-n">${rate==null?'—':rate+'%'}</div><div class="weekly-stat-l">Screen-pass rate</div></div>
-      <div class="weekly-stat"><div class="weekly-stat-n">${data.pending}</div><div class="weekly-stat-l">Pending</div></div>`;
+    const decided = (data.passed||0)+(data.ghosted||0)+(data.rejected||0);
+    const trendClass = rate==null ? 'flat' : rate>=50 ? 'up' : rate>=30 ? 'flat' : 'down';
+    const offers = (data.comp_entries||[]).filter(c=>typeof c.offered==='number');
+    const bestOffer = offers.length ? Math.max(...offers.map(c=>c.offered)) : null;
+    const compDelta = bestOffer==null ? null : bestOffer - comp.target;
 
-    listEl.innerHTML = (data.outreach_log||[]).slice(0,15).map(o=>{
-      const badge = o.outcome==='passed' ? '<span style="color:var(--sage)">Passed</span>'
-                  : o.outcome==='ghosted' ? '<span style="color:var(--text-3)">Ghosted</span>'
-                  : o.outcome==='rejected' ? '<span style="color:var(--terra)">Rejected</span>'
-                  : '<span style="color:var(--text-3)">Pending</span>';
-      const actions = o.outcome==='pending' ? `
-        <button class="card-btn" style="font-size:10px;padding:3px 8px" onclick="setScreenResult('${o.outreach_id}','passed')">Passed</button>
-        <button class="card-btn" style="font-size:10px;padding:3px 8px" onclick="setScreenResult('${o.outreach_id}','ghosted')">Ghosted</button>
-        <button class="card-btn" style="font-size:10px;padding:3px 8px" onclick="setScreenResult('${o.outreach_id}','rejected')">Rejected</button>` : '';
-      return `<div style="border:1px solid var(--border);border-radius:var(--r2);padding:8px 10px;font-size:11px">
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <strong>${esc(o.company||'—')}</strong> ${badge}
-        </div>
-        <div style="color:var(--text-2);margin-top:2px">${esc(o.role||'')} ${o.source?'· '+esc(o.source):''} ${o.date?'· '+esc(o.date):''}</div>
-        <div style="margin-top:6px;display:flex;gap:6px">${actions}</div>
+    sb.innerHTML = `
+      <div class="score-card hero">
+        <div class="sc-n">${rate==null?'—':rate+'<small>%</small>'}</div>
+        <div class="sc-l">Screen-pass rate</div>
+        <div class="sc-sub">${decided? `${data.passed} passed of ${decided} decided` : 'No decided outcomes yet'}</div>
+      </div>
+      <div class="score-card">
+        <div class="sc-n">${data.outreach_total||0}</div>
+        <div class="sc-l">Total outreach</div>
+        <div class="sc-sub">lifetime logged</div>
+      </div>
+      <div class="score-card">
+        <div class="sc-n" style="color:${data.pending?'var(--terra)':'var(--forest)'}">${data.pending||0}</div>
+        <div class="sc-l">Awaiting outcome</div>
+        <div class="sc-sub">${data.pending?'needs your action':'all caught up'}</div>
+      </div>
+      <div class="score-card">
+        <div class="sc-n" style="font-size:24px">${fmtDelta(compDelta)}</div>
+        <div class="sc-l">Best offer vs target</div>
+        <div class="sc-sub">${bestOffer==null?'no comp logged':'target $'+comp.target.toLocaleString()}</div>
       </div>`;
-    }).join('') || '<div style="font-size:11px;color:var(--text-3)">No outreach logged yet.</div>';
 
-    compEl.innerHTML = (data.comp_entries||[]).slice(0,10).map(c=>{
-      const delta = (typeof c.offered==='number') ? c.offered - comp.target : null;
-      const deltaStr = delta==null ? '' : (delta>=0?'+':'') + '$' + delta.toLocaleString() + ' vs target';
-      return `<div style="border:1px solid var(--border);border-radius:var(--r2);padding:8px 10px;font-size:11px">
-        <strong>${esc(c.company||'—')}</strong> — $${(c.offered||0).toLocaleString()} ${c.accepted?'(accepted)':''}
-        <div style="color:var(--text-2);margin-top:2px">${esc(deltaStr)}</div>
+    const log = data.outreach_log||[];
+    const action = log.filter(o=>o.outcome==='pending');
+    const flight = log.filter(o=>o.outcome==='passed');
+    const closed = log.filter(o=>o.outcome==='ghosted'||o.outcome==='rejected');
+
+    const card = (o, kind) => {
+      const open = outreachBriefOpen.has(o.outreach_id);
+      const hasBrief = !!briefData[o.outreach_id];
+      const briefChip = hasBrief
+        ? `<span class="o-briefchip ready">✦ brief ready</span>`
+        : (o.jd ? `<span class="o-briefchip">no brief — JD on file</span>` : `<span class="o-briefchip">no JD captured</span>`);
+      const briefBtn = hasBrief ? `<button class="o-btn brief" onclick="toggleOutreachBrief('${o.outreach_id}')">${open?'Hide brief':'View brief'}</button>` : '';
+      const outcomeBtns = o.outcome==='pending' ? `
+        <button class="o-btn pass" onclick="setScreenResult('${o.outreach_id}','passed')">Passed screen</button>
+        <button class="o-btn ghost" onclick="setScreenResult('${o.outreach_id}','ghosted')">Ghosted</button>
+        <button class="o-btn reject" onclick="setScreenResult('${o.outreach_id}','rejected')">Rejected</button>` : '';
+      return `<div class="o-card ${kind}">
+        <div class="o-top">
+          <div>
+            <div class="o-co">${esc(o.company||'—')}</div>
+            ${o.role?`<div class="o-role">${esc(o.role)}</div>`:''}
+            <div class="o-meta">
+              ${o.source?`<span>${esc(o.source)}</span><span class="om-dot">·</span>`:''}
+              ${o.date?`<span>${esc(o.date)}</span><span class="om-dot">·</span>`:''}
+              ${briefChip}
+            </div>
+          </div>
+          <span class="o-badge ${o.outcome}">${o.outcome}</span>
+        </div>
+        <div class="o-actions">${briefBtn}${outcomeBtns}</div>
+        ${open?`<div class="brief-wrap" id="brief-${o.outreach_id}" style="margin-top:11px"></div>`:''}
+      </div>`;
+    };
+
+    const groupBlock = (title, arr, kind) => arr.length ? `
+      <div class="pipe-group ${kind==='action'?'action':''}">
+        <div class="pipe-group-head">${title} <span class="pg-n">${arr.length}</span><span class="pg-line"></span></div>
+        ${arr.map(o=>card(o,kind)).join('')}
+      </div>` : '';
+
+    let html = groupBlock('Needs action', action, 'action')
+             + groupBlock('In flight', flight, 'flight')
+             + groupBlock('Closed', closed, 'closed');
+    if (!log.length) {
+      html = `<div class="pipe-empty">No outreach logged yet. When a recruiter reaches out, log it above — paste their message or the JD and you'll get a tailored translation brief instantly.</div>`;
+    }
+    groups.innerHTML = html;
+    for (const id of outreachBriefOpen) renderBrief(id);
+
+    compList.innerHTML = offers.slice(0,8).map(c=>{
+      const delta = c.offered - comp.target;
+      return `<div style="display:flex;justify-content:space-between;align-items:center;border:1px solid var(--border);border-radius:var(--r);padding:7px 11px;font-size:11.5px">
+        <span><strong>${esc(c.company||'—')}</strong> · $${(c.offered||0).toLocaleString()}${c.accepted?' <span style="color:var(--forest-3)">✓ accepted</span>':''}</span>
+        <span style="color:${delta>=0?'var(--forest-3)':'var(--terra)'};font-family:'JetBrains Mono',monospace">${fmtDelta(delta)} vs target</span>
       </div>`;
     }).join('');
+
+    document.getElementById('vt-pipeline-n').textContent = data.pending || 0;
   } catch (e) {
-    metricsEl.innerHTML = `<div style="font-size:11px;color:var(--terra)">Failed to load: ${e.message}</div>`;
+    document.getElementById('scoreboard').innerHTML = `<div class="pipe-empty" style="grid-column:1/-1;color:var(--terra)">Couldn't load funnel: ${esc(e.message)}. Outreach tracking needs Supabase configured (SUPABASE_URL + SUPABASE_KEY).</div>`;
+    document.getElementById('pipeGroups').innerHTML = '';
   }
 }
 
+function toggleOutreachBrief(id) {
+  if (outreachBriefOpen.has(id)) outreachBriefOpen.delete(id);
+  else { outreachBriefOpen.add(id); if(!activeBriefTab[id]) activeBriefTab[id]='alignment'; }
+  renderPipeline();
+}
+
 async function logOutreach() {
-  const company = document.getElementById('outCompany').value.trim();
+  const company = document.getElementById('po_company').value.trim();
   if (!company) { showError('Company is required to log outreach.'); return; }
-  const payload = {
-    outreach_id: genOutreachId(),
-    company,
-    role: document.getElementById('outRole').value.trim(),
-    source: document.getElementById('outSource').value.trim(),
-    jd: document.getElementById('outJD').value.trim(),
-    date: document.getElementById('outDate').value || new Date().toISOString().slice(0,10)
-  };
+  const role   = document.getElementById('po_role').value.trim();
+  const source = document.getElementById('po_source').value.trim();
+  const jd     = document.getElementById('po_jd').value.trim();
+  const date   = document.getElementById('po_date').value || new Date().toISOString().slice(0,10);
+  const btn = document.getElementById('po_submit');
+
+  const payload = { outreach_id: genOutreachId(), company, role, source, jd, date };
+
+  // Generate the translation brief on the pasted JD — the moment of leverage.
+  if (jd && claudeEnabled) {
+    btn.disabled = true; btn.textContent = '⟳ Generating brief…';
+    try {
+      const synthetic = { job_title: role||company, employer_name: company, job_description: jd,
+                          job_posted_at_datetime_utc: new Date().toISOString() };
+      const score = Math.max(0, fitScore(synthetic));
+      const r = await fetch('/brief', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ title: role||company, company, description: jd, score,
+                               isDirect:false, source: source||'Recruiter outreach', hiddenGem:false, minSal:0, maxSal:0 })
+      });
+      if (r.ok) { payload.brief = await r.json(); payload.score = score; briefData[payload.outreach_id] = payload.brief; }
+    } catch(e) { /* brief is best-effort; still log the outreach */ }
+    btn.disabled = false; btn.textContent = '⚡ Log & generate brief';
+  }
+
   await logClientEvent('recruiter_outreach', payload);
-  document.getElementById('outCompany').value = '';
-  document.getElementById('outRole').value = '';
-  document.getElementById('outSource').value = '';
-  document.getElementById('outJD').value = '';
-  await refreshOutreachData();
+  ['po_company','po_role','po_source','po_jd'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('composer').classList.remove('open');
+  if (payload.brief) outreachBriefOpen.add(payload.outreach_id);
+  pipelineData = null;
+  await renderPipeline();
 }
 
 async function setScreenResult(outreachId, outcome) {
   await logClientEvent('screen_result', { outreach_id: outreachId, outcome, date: new Date().toISOString().slice(0,10) });
-  await refreshOutreachData();
+  pipelineData = null;
+  await renderPipeline();
 }
 
 async function logCompData() {
-  const company = document.getElementById('compCompany').value.trim();
-  const offered = parseInt(document.getElementById('compOffered').value);
+  const company = document.getElementById('pc_company').value.trim();
+  const offered = parseInt(document.getElementById('pc_offered').value);
   if (!company || !offered) { showError('Company and offered comp are required.'); return; }
-  const payload = {
-    company,
-    offered,
-    accepted: document.getElementById('compAccepted').checked,
+  await logClientEvent('comp_data', {
+    company, offered,
+    accepted: document.getElementById('pc_accepted').checked,
     date: new Date().toISOString().slice(0,10)
-  };
-  await logClientEvent('comp_data', payload);
-  document.getElementById('compCompany').value = '';
-  document.getElementById('compOffered').value = '';
-  document.getElementById('compAccepted').checked = false;
-  await refreshOutreachData();
+  });
+  document.getElementById('pc_company').value = '';
+  document.getElementById('pc_offered').value = '';
+  document.getElementById('pc_accepted').checked = false;
+  pipelineData = null;
+  await renderPipeline();
 }
 
 // ── Phase Retro ──────────────────────────────────────────────────────────────
@@ -1733,8 +1925,10 @@ function closeRetroModal() {
   document.getElementById('compFloor').value   = comp.floor;
   document.getElementById('compTarget').value  = comp.target;
   document.getElementById('compCeiling').value = comp.ceiling;
+  document.getElementById('po_date').value = new Date().toISOString().slice(0,10);
   updateStats(); updateModePill(); renderQueue(); renderQuick(); render();
   document.getElementById('rotatingQ').textContent = POOL[poolIdx % POOL.length].q;
+  setView('pipeline');   // outreach-first home
 })();
 </script>
 </body>
